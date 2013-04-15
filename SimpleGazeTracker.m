@@ -1,5 +1,5 @@
 function ret = SimpleGazeTracker(varargin)
-% SimpeGazeTracker toolbox 0.1.0 (compatible with SimpleGazeTracker 0.6.4)
+% SimpeGazeTracker toolbox 0.1.0 (compatible with SimpleGazeTracker 0.6.5)
 % Copyright (C) 2012-2013 Hiroyuki Sogo.
 % Distributed under the terms of the GNU General Public License (GPL).
 % 
@@ -754,7 +754,6 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 		return;
 	end
 	
-	disp(data)
 	points = str2num(data);
 	if getPupil==1
 		res = transpose(reshape(points,4,length(points)/4)); %4=(timestamp, x, y, pupil)
