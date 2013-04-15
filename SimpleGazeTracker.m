@@ -1,5 +1,5 @@
 function ret = SimpleGazeTracker(varargin)
-% SimpeGazeTracker toolbox
+% SimpeGazeTracker toolbox 0.1.0 (compatible with SimpleGazeTracker 0.6.4)
 % Copyright (C) 2012-2013 Hiroyuki Sogo.
 % Distributed under the terms of the GNU General Public License (GPL).
 % 
@@ -143,11 +143,13 @@ function param = sgttbx_initialize(arg)
 	param.caltargetMotionDuration = 1.0;
 	param.caltargetDurationPerPos = 2.0;
 	param.calGetSampleDelay = 0.4;
-	param.calArea = [0,0,1024,768];
-	param.calTargetPos = [ 512, 384;
-                512-350,384-250;512-350,384;512-350,384+250;
-                512    ,384-250;512    ,384;512    ,384+250;
-                512+350,384-250;512+350,384;512+350,384+250];
+	param.calArea = arg{3};
+	cx = (param.wrect(3)-param.wrect(1))/2;
+	cy = (param.wrect(4)-param.wrect(2))/2;
+	param.calTargetPos = [ cx, cy;
+                cx-350,cy-250; cx-350,cy; cx-350,cy+250;
+                cx    ,cy-250; cx    ,cy; cx    ,cy+250;
+                cx+350,cy-250; cx+350,cy; cx+350,cy+250];
 
 	sgttbx_param = param;
 

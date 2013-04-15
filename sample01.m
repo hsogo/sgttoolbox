@@ -99,6 +99,10 @@ try
 	%Stop recording.
 	SimpleGazeTracker('StopRecording','',0.1);
 	
+	%-----------------------------------------------------------------
+	% Transfer data from SimpleGazeTracker.
+	%   
+	%-----------------------------------------------------------------
 	fid = fopen('log.txt','wt');
 	%Get all messages.
 	msglist = SimpleGazeTracker('GetWholeMessageList',1.0); %
@@ -106,6 +110,7 @@ try
 	for i=1:length(msglist)
 		fprintf(fid,'%f,%s\n',msglist{i,1},msglist{i,2});
 	end
+	fprintf(fid,'\n');
 	
 	%Get all gaze position data.
 	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,1.0);
@@ -113,7 +118,17 @@ try
 	for i=1:length(wholegazeposlist)
 		fprintf(fid,'%f,%.1f,%.1f\n',wholegazeposlist(i,1),wholegazeposlist(i,2),wholegazeposlist(i,3));
 	end
+	fprintf(fid,'\n');
 	
+	%Output result of GetEyePositionList
+	fprintf(fid,'GetEyePositionList test\n');
+	fprintf(fid,'Number of space-key press:%d\n',length(gazeposlist));
+	for i=1:length(gazeposlist)
+		fprintf(fid,'Keypress %d\n',i);
+		for j=1:length(gazeposlist{i})
+			fprintf(fid,'%f,%.1f,%.1f\n',gazeposlist{i}(j,1),gazeposlist{i}(j,2),gazeposlist{i}(j,3));
+		end
+	end
 	fclose(fid);
 	
 	%-----------------------------------------------------------------
@@ -122,6 +137,9 @@ try
 	SimpleGazeTracker('CloseDataFile');
 	SimpleGazeTracker('CloseConnection');
 
+	%-----------------------------------------------------------------
+	% Close Psychtoolbox screen.
+	%-----------------------------------------------------------------
 	Screen('CloseAll');
 catch
 	SimpleGazeTracker('CloseConnection');
