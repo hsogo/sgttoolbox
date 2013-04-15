@@ -67,6 +67,7 @@ try
 	%   square is drawn at the current gaze position.
 	%-----------------------------------------------------------------
 	gazeposlist = {};
+	geteyeposdelaylist = [];
 	%Start recording.
 	SimpleGazeTracker('StartRecording','Test trial',0.1);
 	for q = 1:300 %300 frames
@@ -83,13 +84,18 @@ try
 			%Send message every 60 frames.
 			SimpleGazeTracker('SendMessage',num2str(q));
 		end
+		
 		st = GetSecs();
-		pos = SimpleGazeTracker('GetEyePosition',3); %get current gaze position (moving average of 3 samples).
-		markerx = pos{1}(1); %horizontal component of current gaze position
-		markery = pos{1}(2); %vertical component of current gaze position
-		1000*(GetSecs()-st);
+		%get current gaze position (moving average of 3 samples).
+		pos = SimpleGazeTracker('GetEyePosition',3);
+		geteyeposdelaylist = [geteyeposdelaylist, 1000*(GetSecs()-st)];
+		
 		stimx = 200*cos(q/50)+cx;
 		stimy = 200*sin(q/50)+cy;
+		%horizontal component of current gaze position
+		markerx = pos{1}(1);
+		%vertical component of current gaze position
+		markery = pos{1}(2);
 		Screen('FillRect',wptr,127);
 		Screen('FillRect',wptr,0,[stimx-5,stimy-5,stimx+5,stimy+5]);
 		%draw marker at the current gaze position.
@@ -101,7 +107,6 @@ try
 	
 	%-----------------------------------------------------------------
 	% Transfer data from SimpleGazeTracker.
-	%   
 	%-----------------------------------------------------------------
 	fid = fopen('log.txt','wt');
 	%Get all messages.
@@ -116,7 +121,8 @@ try
 	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,1.0);
 	fprintf(fid,'GetWholeEyePositionList test\n');
 	for i=1:length(wholegazeposlist)
-		fprintf(fid,'%f,%.1f,%.1f\n',wholegazeposlist(i,1),wholegazeposlist(i,2),wholegazeposlist(i,3));
+		fprintf(fid,'%f,%.1f,%.1f\n',\
+			wholegazeposlist(i,1),wholegazeposlist(i,2),wholegazeposlist(i,3));
 	end
 	fprintf(fid,'\n');
 	
@@ -126,8 +132,16 @@ try
 	for i=1:length(gazeposlist)
 		fprintf(fid,'Keypress %d\n',i);
 		for j=1:length(gazeposlist{i})
-			fprintf(fid,'%f,%.1f,%.1f\n',gazeposlist{i}(j,1),gazeposlist{i}(j,2),gazeposlist{i}(j,3));
+			fprintf(fid,'%f,%.1f,%.1f\n',\
+				gazeposlist{i}(j,1),gazeposlist{i}(j,2),gazeposlist{i}(j,3));
 		end
+	end
+	fprintf(fid,'\n');
+	
+	%Output delay of SimpleGazeTracker('GetEyePosition')
+	fprintf(fid,'Delay of SimpleGazeTracker(''GetEyePosition'')\n');
+	for i=1:length(geteyeposdelaylist)
+		fprintf(fid,'%f\n',geteyeposdelaylist(i));
 	end
 	fclose(fid);
 	
@@ -146,4 +160,3 @@ catch
 	Screen('CloseAll');
 	psychrethrow(psychlasterror);
 end
-
