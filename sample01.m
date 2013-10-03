@@ -1,14 +1,21 @@
 %AssertOpenGL;
+Screen('Preference', 'SkipSyncTests', 2);
 
-try
+ipAddress = input('SimpleGazeTracker address: ','s');
+imageWidth = input('Camera image width: ');
+imageHeight = input('Camera image height ');
+
+
+%try
 
 	%-----------------------------------------------------------------
 	% Open PsychToolbox Window.
 	%   wptr and wrect are necessary to initialize SimpleGazeTracker
 	%   toolbox later.
 	%-----------------------------------------------------------------
-	[wptr, wrect] = Screen('OpenWindow',0)
-	%[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768])
+	%[wptr, wrect] = Screen('OpenWindow',0)
+	
+	[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768])
 	cx = wrect(3)/2;
 	cy = wrect(4)/2;
 	
@@ -23,9 +30,9 @@ try
 	% Update SimpleGazeTracker Toolbox parameters.
 	%-----------------------------------------------------------------
 	%'localhost' means that SimpleGazeTracker is running on the same PC.
-	param.IPAddress = 'localhost';
-	param.imageWidth = 640;
-	param.imageHeight = 480;
+	param.IPAddress = ipAddress;
+	param.imageWidth = imageWidth;
+	param.imageHeight = imageHeight;
 	param.calArea = wrect;
 	param.calTargetPos = [0,0;-400,-300; 0,-300; 400,-300;\
 	                          -400,   0; 0,   0; 400,   0;\
@@ -38,7 +45,11 @@ try
 	%-----------------------------------------------------------------
 	% Connect to SimpleGazeTracker and open data file.
 	%-----------------------------------------------------------------
-	SimpleGazeTracker('Connect');
+	res = SimpleGazeTracker('Connect');
+	if res==-1 %connection failed
+		Screen('CloseAll');
+		quit
+	end
 	SimpleGazeTracker('OpenDataFile','data.csv',0); %datafile is not overwritten.
 	
 	%-----------------------------------------------------------------
@@ -68,17 +79,24 @@ try
 	%-----------------------------------------------------------------
 	gazeposlist = {};
 	geteyeposdelaylist = [];
+	previousKeyPressTime = GetSecs();
 	%Start recording.
 	SimpleGazeTracker('StartRecording','Test trial',0.1);
+
 	for q = 1:300 %300 frames
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('Space'))==1
-			SimpleGazeTracker('SendMessage','Space');
-			%get the latest 6 samples.
-			tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.02);
-			if length(tmp)>0
-				gazeposlist(length(gazeposlist)+1) = tmp;
-			end
+		    if GetSecs()-previousKeyPressTime > 0.1
+				SimpleGazeTracker('SendMessage','Space');
+				%get the latest 6 samples.
+				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.02);
+				if length(tmp)>0
+					gazeposlist(length(gazeposlist)+1) = tmp;
+				end
+				tmp
+				%update previousKeyPressTime
+				previousKeyPressTime = GetSecs();
+		    end
 		end
 		if mod(q,60)==0
 			%Send message every 60 frames.
@@ -155,8 +173,8 @@ try
 	% Close Psychtoolbox screen.
 	%-----------------------------------------------------------------
 	Screen('CloseAll');
-catch
-	SimpleGazeTracker('CloseConnection');
-	Screen('CloseAll');
-	psychrethrow(psychlasterror);
-end
+%catch
+%	SimpleGazeTracker('CloseConnection');
+%	Screen('CloseAll');
+%	psychrethrow(psychlasterror);
+%end
