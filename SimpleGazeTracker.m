@@ -158,19 +158,19 @@ function ret = sgttbx_updateparam(sgttbx_param, arg)
 	ret = 0;
 
 function res = sgttbx_connect(sgttbx_param)
-	res = [-1, -1];
+	res = -1;
 	if ~isstruct(sgttbx_param)
 		disp('Parameters may not be initialized.')
 		return;
 	end
 	sendcon = pnet('tcpconnect',sgttbx_param.IPAddress,sgttbx_param.sendPort, 'noblock');
 	if sendcon < 0
-		disp('Failed.')
+		disp('tcpconnect was Failed.')
 		return;
 	end
 	recvsock = pnet('tcpsocket',sgttbx_param.recvPort)
 	if recvsock < 0
-		disp('Failed')
+		disp('tcpsocket was Failed')
 		return;
 	end
 	startTime = GetSecs();
@@ -182,7 +182,7 @@ function res = sgttbx_connect(sgttbx_param)
 		WaitSecs(0.5);
 	end
 	if recvcon < 0
-		disp('Failed')
+		disp('tcplisten Failed')
 		return;
 	end
 	pnet(recvcon,'setreadtimeout',0.02);
@@ -343,6 +343,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 		end
 		if keyCode(KbName('c'))==1
 			sgttbx_doCalibration(param, sockets);
+			WaitSecs(0.1);
 			calmsgstr = sgttbx_getCalResults(sockets, 0.2);
 			calimgtex = sgttbx_drawCalResults(param, sockets, calimgtex, 0.2);
 			isCalDone = 1;
@@ -351,6 +352,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 		if keyCode(KbName('v'))==1
 			if(isCalDone==1)
 				sgttbx_doValidation(param, sockets);
+				WaitSecs(0.1);
 				calmsgstr = sgttbx_getCalResults(sockets, 0.2);
 				calimgtex = sgttbx_drawCalResults(param, sockets, calimgtex, 0.2);
 				showCalResults = 1;
