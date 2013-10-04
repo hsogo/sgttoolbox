@@ -1,5 +1,4 @@
-%AssertOpenGL;
-Screen('Preference', 'SkipSyncTests', 2);
+AssertOpenGL;
 
 ipAddress = input('SimpleGazeTracker address: ','s');
 imageWidth = input('Camera image width: ');
@@ -82,18 +81,19 @@ imageHeight = input('Camera image height ');
 	previousKeyPressTime = GetSecs();
 	%Start recording.
 	SimpleGazeTracker('StartRecording','Test trial',0.1);
+	WaitSecs(0.5);
 
 	for q = 1:300 %300 frames
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('Space'))==1
+			GetSecs()-previousKeyPressTime
 		    if GetSecs()-previousKeyPressTime > 0.1
 				SimpleGazeTracker('SendMessage','Space');
 				%get the latest 6 samples.
-				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.02);
+				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.5);
 				if length(tmp)>0
 					gazeposlist(length(gazeposlist)+1) = tmp;
 				end
-				tmp
 				%update previousKeyPressTime
 				previousKeyPressTime = GetSecs();
 		    end
@@ -105,7 +105,7 @@ imageHeight = input('Camera image height ');
 		
 		st = GetSecs();
 		%get current gaze position (moving average of 3 samples).
-		pos = SimpleGazeTracker('GetEyePosition',3);
+		pos = SimpleGazeTracker('GetEyePosition',3,0.5);
 		geteyeposdelaylist = [geteyeposdelaylist, 1000*(GetSecs()-st)];
 		
 		stimx = 200*cos(q/50)+cx;
@@ -122,18 +122,20 @@ imageHeight = input('Camera image height ');
 	end
 	%Stop recording.
 	SimpleGazeTracker('StopRecording','',0.1);
+	WaitSecs(0.5);
 	
 	%-----------------------------------------------------------------
 	% Transfer data from SimpleGazeTracker.
 	%-----------------------------------------------------------------
 	fid = fopen('log.txt','wt');
 	%Get all messages.
-	msglist = SimpleGazeTracker('GetWholeMessageList',1.0); %
+	msglist = SimpleGazeTracker('GetWholeMessageList',1.0);
 	fprintf(fid,'GetWholeMessageList test\n');
 	for i=1:length(msglist)
 		fprintf(fid,'%f,%s\n',msglist{i,1},msglist{i,2});
 	end
 	fprintf(fid,'\n');
+	WaitSecs(0.5);
 	
 	%Get all gaze position data.
 	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,1.0);
@@ -143,6 +145,7 @@ imageHeight = input('Camera image height ');
 			wholegazeposlist(i,1),wholegazeposlist(i,2),wholegazeposlist(i,3));
 	end
 	fprintf(fid,'\n');
+	WaitSecs(0.5);
 	
 	%Output result of GetEyePositionList
 	fprintf(fid,'GetEyePositionList test\n');

@@ -112,7 +112,7 @@ switch(varargin{1})
 		ret = sgttbx_sendCommand(sgttbx_sockets, varargin{2});
 		return;
 	case 'GetEyePosition'
-		ret = sgttbx_getEyePosition(sgttbx_sockets, varargin{2});
+		ret = sgttbx_getEyePosition(sgttbx_sockets, varargin{2}, varargin{3});
 		return;
 	case 'GetEyePositionList'
 		ret = sgttbx_getEyePositionList(sgttbx_sockets, varargin{2}, varargin{3}, varargin{4});
@@ -345,6 +345,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 			sgttbx_doCalibration(param, sockets);
 			WaitSecs(0.1);
 			calmsgstr = sgttbx_getCalResults(sockets, 0.2);
+			WaitSecs(0.1);
 			calimgtex = sgttbx_drawCalResults(param, sockets, calimgtex, 0.2);
 			isCalDone = 1;
 			showCalResults = 1;
@@ -354,6 +355,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 				sgttbx_doValidation(param, sockets);
 				WaitSecs(0.1);
 				calmsgstr = sgttbx_getCalResults(sockets, 0.2);
+				WaitSecs(0.1);
 				calimgtex = sgttbx_drawCalResults(param, sockets, calimgtex, 0.2);
 				showCalResults = 1;
 			end
@@ -389,10 +391,11 @@ function res = sgttbx_stopRecording(sockets, message, wait)
 	res = sgttbx_sendCommand(sockets,['stopRecording',0x00,message]);
 	WaitSecs(wait);
 	
-function pos = sgttbx_getEyePosition(sockets,n)
-    pos = {-10000,-10000,0};
+function pos = sgttbx_getEyePosition(sockets, n, timeout)
+    pos = {[-10000,-10000],0};
     sgttbx_sendCommand(sockets, ['getEyePosition',0x00,num2str(n)]);
 	result = [];
+	startTime = GetSecs();
     while 1
 		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
 		if length(data)==16384
@@ -405,6 +408,9 @@ function pos = sgttbx_getEyePosition(sockets,n)
 				result = [result, data(1:end-1)];
 				break;
 			end
+		end
+		if GetSecs()-startTime>timeout
+			return
 		end
 	end
 	result = str2num(result);
@@ -717,7 +723,7 @@ function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 		end
 	end
 	
-	if length(result)==0 %no messages
+	if length(result)==0 %no data
 		return;
 	end
 	
@@ -751,8 +757,7 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 		end
 	end
 	
-	if length(result)==0 %no messages
-		disp('no data')
+	if length(result)==0 %no data
 		return;
 	end
 	
