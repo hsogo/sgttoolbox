@@ -14,6 +14,7 @@ imageHeight = input('Camera image height ');
 	%-----------------------------------------------------------------
 	%[wptr, wrect] = Screen('OpenWindow',0)
 	
+	disp('OpenWindow')
 	[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768])
 	cx = wrect(3)/2;
 	cy = wrect(4)/2;
@@ -44,6 +45,7 @@ imageHeight = input('Camera image height ');
 	%-----------------------------------------------------------------
 	% Connect to SimpleGazeTracker and open data file.
 	%-----------------------------------------------------------------
+	disp('Connect')
 	res = SimpleGazeTracker('Connect');
 	if res==-1 %connection failed
 		Screen('CloseAll');
@@ -86,7 +88,7 @@ imageHeight = input('Camera image height ');
 	for q = 1:300 %300 frames
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('Space'))==1
-			GetSecs()-previousKeyPressTime
+			GetSecs()-previousKeyPressTime;
 		    if GetSecs()-previousKeyPressTime > 0.1
 				SimpleGazeTracker('SendMessage','Space');
 				%get the latest 6 samples.
@@ -129,7 +131,7 @@ imageHeight = input('Camera image height ');
 	%-----------------------------------------------------------------
 	fid = fopen('log.txt','wt');
 	%Get all messages.
-	msglist = SimpleGazeTracker('GetWholeMessageList',1.0);
+	msglist = SimpleGazeTracker('GetWholeMessageList',3.0);
 	fprintf(fid,'GetWholeMessageList test\n');
 	for i=1:length(msglist)
 		fprintf(fid,'%f,%s\n',msglist{i,1},msglist{i,2});
@@ -138,7 +140,7 @@ imageHeight = input('Camera image height ');
 	WaitSecs(0.5);
 	
 	%Get all gaze position data.
-	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,1.0);
+	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,3.0);
 	fprintf(fid,'GetWholeEyePositionList test\n');
 	for i=1:length(wholegazeposlist)
 		fprintf(fid,'%f,%.1f,%.1f\n',\

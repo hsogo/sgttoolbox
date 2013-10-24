@@ -42,7 +42,7 @@ function ret = SimpleGazeTracker(varargin)
 % ret = SimpleGazeTracker('SendMessage', message);
 % 
 % %Get latest gaze position
-% pos = SimpleGazeTracker('GetEyePosition', ma);
+% pos = SimpleGazeTracker('GetEyePosition', ma, timeout);
 %	
 % %Get latest gaze position list.
 % msg = SimpleGazeTracker('GetEyePositionList', n, getPupil, timeout)
@@ -81,7 +81,7 @@ switch(varargin{1})
 		ret = sgttbx_closeDataFile(sgttbx_sockets);
 		return;
 	case 'Connect'
-		pnet('closeall')
+		sgttbx_net('closeall')
 		res = sgttbx_connect(sgttbx_param);
 		if isstruct(res)
 			sgttbx_sockets = res;
@@ -91,7 +91,7 @@ switch(varargin{1})
 			return;
 		end
 	case 'CloseConnection'
-		pnet('closeall');
+		sgttbx_net('closeall');
 		ret = 0;
 		return;
 	case 'SendMessage'
@@ -163,19 +163,19 @@ function res = sgttbx_connect(sgttbx_param)
 		disp('Parameters may not be initialized.')
 		return;
 	end
-	sendcon = pnet('tcpconnect',sgttbx_param.IPAddress,sgttbx_param.sendPort, 'noblock');
+	sendcon = sgttbx_net('tcpconnect',sgttbx_param.IPAddress,sgttbx_param.sendPort, 'noblock');
 	if sendcon < 0
 		disp('tcpconnect was Failed.')
 		return;
 	end
-	recvsock = pnet('tcpsocket',sgttbx_param.recvPort)
+	recvsock = sgttbx_net('tcpsocket',sgttbx_param.recvPort)
 	if recvsock < 0
 		disp('tcpsocket was Failed')
 		return;
 	end
 	startTime = GetSecs();
 	while GetSecs()-startTime<5
-		recvcon = pnet(recvsock, 'tcplisten')
+		recvcon = sgttbx_net(recvsock, 'tcplisten')
 		if recvcon>=0
 			break;
 		end
@@ -185,9 +185,9 @@ function res = sgttbx_connect(sgttbx_param)
 		disp('tcplisten Failed')
 		return;
 	end
-	pnet(recvcon,'setreadtimeout',0.02);
+	sgttbx_net(recvcon,'setreadtimeout',1.0);
 	disp('gethost');
-    	[ip,port] = pnet(recvcon, 'gethost');
+    	[ip,port] = sgttbx_net(recvcon, 'gethost');
 	disp(['Connected from ', num2str(ip(1)), '.', num2str(ip(2)), '.', num2str(ip(3)), '.', num2str(ip(4)), ':', num2str(port)])
 
 	sockets.recvsock = recvsock;
@@ -218,11 +218,14 @@ function res = sgttbx_sendCommand(sockets, command)
 	if sockets.sendcon < 0
 		return;
 	end
-	if pnet(sockets.sendcon,'status') == 0
+	if sgttbx_net(sockets.sendcon,'status') == 0
 		return;
 	end
+	%fdisp(stderr,command);
 	command(end+1) = 0x00;
-	pnet(sockets.sendcon, 'write', command);
+	%start = GetSecs();
+	sgttbx_net(sockets.sendcon, 'write', command);
+	%fdisp(stderr,1000*(GetSecs()-start));
 	res = 0;
 
 function res = sgttbx_sendMessage(sockets, message);
@@ -235,10 +238,9 @@ function msg = sgttbx_getCurrentMenu(sockets)
 	end
 	sgttbx_sendCommand(sockets, 'getCurrMenu');
     while 1
-		data = pnet(sockets.recvcon,'read','char','view','noblock');
+		data = sgttbx_net(sockets.recvcon,'read');
 		term = find(data==0x00);
 		if term>1
-			data = pnet(sockets.recvcon,'read', term);
 			msg = data(1:end-1);
 			return;
 		end
@@ -249,20 +251,29 @@ function img = sgttbx_getCameraImage(param, sockets)
 	if ~isstruct(sockets)
 		return
 	end
+	%fdisp(stderr,'--------------')
+	%start = GetSecs();
 	sgttbx_sendCommand(sockets, 'getImageData');
     while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
-		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384, 'uint8');
+    	readstart = GetSecs();
+		data = sgttbx_net(sockets.recvcon, 'read', 'uint8');
+		%fdisp(stderr,[1000*(GetSecs()-start),length(data)]);
+		if length(data)==65536
 			img = [img, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term, 'uint8');
 				img = [img, data(1:end-1)];
 				break;
+			else
+				img = [img, data];
 			end
 		end
+	end
+	%fdisp(stderr,1000*(GetSecs()-start))
+	
+	if length(img) ~= param.imageWidth*param.imageHeight
+		img = uint8(zeros(param.imageWidth,param.imageHeight));
 	end
 	
 	img = transpose(reshape(img,param.imageWidth,param.imageHeight));
@@ -343,9 +354,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 		end
 		if keyCode(KbName('c'))==1
 			sgttbx_doCalibration(param, sockets);
-			WaitSecs(0.1);
 			calmsgstr = sgttbx_getCalResults(sockets, 0.2);
-			WaitSecs(0.1);
 			calimgtex = sgttbx_drawCalResults(param, sockets, calimgtex, 0.2);
 			isCalDone = 1;
 			showCalResults = 1;
@@ -353,9 +362,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 		if keyCode(KbName('v'))==1
 			if(isCalDone==1)
 				sgttbx_doValidation(param, sockets);
-				WaitSecs(0.1);
 				calmsgstr = sgttbx_getCalResults(sockets, 0.2);
-				WaitSecs(0.1);
 				calimgtex = sgttbx_drawCalResults(param, sockets, calimgtex, 0.2);
 				showCalResults = 1;
 			end
@@ -396,36 +403,39 @@ function pos = sgttbx_getEyePosition(sockets, n, timeout)
     sgttbx_sendCommand(sockets, ['getEyePosition',0x00,num2str(n)]);
 	result = [];
 	startTime = GetSecs();
-    while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
-		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384);
+	
+	while 1
+		data = sgttbx_net(sockets.recvcon,'read');
+		if length(data)==65536
 			result = [result, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term);
-				result = [result, data(1:end-1)];
+				result = [result; data(1:end-1)];
 				break;
+			else
+				result = [result, data];
 			end
 		end
-		if GetSecs()-startTime>timeout
+		
+		if GetSecs()-startTime > timeout
 			return
 		end
 	end
-	result = str2num(result);
-	if length(result)==3
-		pos{1} = result(1:2);
-		pos{2} = result(3);
+	
+	
+	resnum = str2num(result);
+	if length(resnum)==3
+		pos{1} = resnum(1:2);
+		pos{2} = resnum(3);
 	end
 
 function res = isBinocularMode(sockets)
 	sgttbx_sendCommand(sockets, 'isBinocularMode');
     while 1
-		data = pnet(sockets.recvcon,'read','char','view','noblock');
+		data = sgttbx_net(sockets.recvcon,'read');
 		term = find(data==0x00);
 		if term>1
-			data = pnet(sockets.recvcon,'read', term, 'char');
 			msg = data(1:end-1);
 			if msg(1)=='1'
 				res = 1;
@@ -590,16 +600,16 @@ function offscr = sgttbx_drawCalResults(param, sockets, calimgtex, timeout)
 	result = [];
 	startTime = GetSecs();
     while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
-		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384);
+		data = sgttbx_net(sockets.recvcon,'read');
+		if length(data)==65536
 			result = [result, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term);
 				result = [result, data(1:end-1)];
 				break;
+			else
+				result = [result, data];
 			end
 		end
 		if GetSecs()-startTime>timeout
@@ -621,16 +631,16 @@ function res = sgttbx_getCalResults(sockets, timeout)
 	result = [];
 	startTime = GetSecs();
     while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
-		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384);
+		data = sgttbx_net(sockets.recvcon,'read');
+		if length(data)==65536
 			result = [result, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term);
 				result = [result, data(1:end-1)];
 				break;
+			else
+				result = [result, data];
 			end
 		end
 		if GetSecs()-startTime>timeout
@@ -648,16 +658,16 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 	result = [];
 	startTime = GetSecs();
     while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
-		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384);
+		data = sgttbx_net(sockets.recvcon,'read');
+		if length(data)==65536
 			result = [result, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term);
 				result = [result, data(1:end-1)];
 				break;
+			else
+				result = [result, data];
 			end
 		end
 		if GetSecs()-startTime>timeout
@@ -706,16 +716,16 @@ function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 	result = [];
 	startTime = GetSecs();
     while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
-		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384);
+		data = sgttbx_net(sockets.recvcon,'read');
+		if length(data)==65536
 			result = [result, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term);
 				result = [result, data(1:end-1)];
 				break;
+			else
+				result = [result, data];
 			end
 		end
 		if GetSecs()-startTime>timeout
@@ -740,16 +750,16 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 	result = [];
 	startTime = GetSecs();
     while 1
-		data = pnet(sockets.recvcon,'read', 16384, 'view','noblock');
+		data = sgttbx_net(sockets.recvcon,'read');
 		if length(data)==16384
-			data = pnet(sockets.recvcon,'read', 16384);
 			result = [result, data];
 		else
 			term = find(data==0x00);
 			if term>1
-				data = pnet(sockets.recvcon,'read', term);
 				result = [result, data(1:end-1)];
 				break;
+			else
+				result = [result, data];
 			end
 		end
 		if GetSecs()-startTime>timeout
