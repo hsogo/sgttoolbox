@@ -5,7 +5,7 @@ imageWidth = input('Camera image width: ');
 imageHeight = input('Camera image height ');
 
 
-%try
+try
 
 	%-----------------------------------------------------------------
 	% Open PsychToolbox Window.
@@ -81,15 +81,16 @@ imageHeight = input('Camera image height ');
 	gazeposlist = {};
 	geteyeposdelaylist = [];
 	previousKeyPressTime = GetSecs();
+	targetColor = 255;
 	%Start recording.
 	SimpleGazeTracker('StartRecording','Test trial',0.1);
-	WaitSecs(0.5);
 
-	for q = 1:300 %300 frames
+	for q = 1:360 %360 frames
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('Space'))==1
 			GetSecs()-previousKeyPressTime;
-		    if GetSecs()-previousKeyPressTime > 0.1
+			% prevent chattering...
+		    if GetSecs()-previousKeyPressTime > 0.2
 				SimpleGazeTracker('SendMessage','Space');
 				%get the latest 6 samples.
 				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.5);
@@ -98,6 +99,12 @@ imageHeight = input('Camera image height ');
 				end
 				%update previousKeyPressTime
 				previousKeyPressTime = GetSecs();
+				%change target color
+				if targetColor==255
+					targetColor=0;
+				else
+					targetColor=255;
+				end
 		    end
 		end
 		if mod(q,60)==0
@@ -110,8 +117,8 @@ imageHeight = input('Camera image height ');
 		pos = SimpleGazeTracker('GetEyePosition',3,0.5);
 		geteyeposdelaylist = [geteyeposdelaylist, 1000*(GetSecs()-st)];
 		
-		stimx = 200*cos(q/50)+cx;
-		stimy = 200*sin(q/50)+cy;
+		stimx = 200*cos(q/180*pi)+cx;
+		stimy = 200*sin(q/180*pi)+cy;
 		%horizontal component of current gaze position
 		markerx = pos{1}(1);
 		%vertical component of current gaze position
@@ -119,12 +126,17 @@ imageHeight = input('Camera image height ');
 		Screen('FillRect',wptr,127);
 		Screen('FillRect',wptr,0,[stimx-5,stimy-5,stimx+5,stimy+5]);
 		%draw marker at the current gaze position.
-		Screen('FillRect',wptr,255,[markerx-5,markery-5,markerx+5,markery+5]);
+		Screen('FillRect',wptr,targetColor,[markerx-5,markery-5,markerx+5,markery+5]);
 		Screen('Flip',wptr);
 	end
 	%Stop recording.
 	SimpleGazeTracker('StopRecording','',0.1);
-	WaitSecs(0.5);
+	
+	%-----------------------------------------------------------------
+	% Clear Screen
+	%-----------------------------------------------------------------
+	Screen('FillRect',wptr,127);
+	Screen('Flip',wptr);
 	
 	%-----------------------------------------------------------------
 	% Transfer data from SimpleGazeTracker.
@@ -137,7 +149,6 @@ imageHeight = input('Camera image height ');
 		fprintf(fid,'%f,%s\n',msglist{i,1},msglist{i,2});
 	end
 	fprintf(fid,'\n');
-	WaitSecs(0.5);
 	
 	%Get all gaze position data.
 	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,3.0);
@@ -147,7 +158,6 @@ imageHeight = input('Camera image height ');
 			wholegazeposlist(i,1),wholegazeposlist(i,2),wholegazeposlist(i,3));
 	end
 	fprintf(fid,'\n');
-	WaitSecs(0.5);
 	
 	%Output result of GetEyePositionList
 	fprintf(fid,'GetEyePositionList test\n');
@@ -173,13 +183,14 @@ imageHeight = input('Camera image height ');
 	%-----------------------------------------------------------------
 	SimpleGazeTracker('CloseDataFile');
 	SimpleGazeTracker('CloseConnection');
-
+	
 	%-----------------------------------------------------------------
 	% Close Psychtoolbox screen.
 	%-----------------------------------------------------------------
 	Screen('CloseAll');
-%catch
-%	SimpleGazeTracker('CloseConnection');
-%	Screen('CloseAll');
-%	psychrethrow(psychlasterror);
-%end
+
+catch
+	SimpleGazeTracker('CloseConnection');
+	Screen('CloseAll');
+	psychrethrow(psychlasterror);
+end

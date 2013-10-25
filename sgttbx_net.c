@@ -1,3 +1,13 @@
+/**********************************************************
+% Mex file for SimpeGazeTracker toolbox 0.2.0
+% (compatible with SimpleGazeTracker 0.6.5)
+% Copyright (C) 2012-2013 Hiroyuki Sogo.
+% Distributed under the terms of the GNU General Public License (GPL).
+% 
+% Part of this program is based on pnet.c Version2.0.5 + PTBMods
+% by Mario Kleiner.
+**********************************************************/
+                                                          
 /******* GENERAL DEFINES *********/
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +26,7 @@
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #define usleep(a) Sleep((a)/1000)
 #define MSG_NOSIGNAL 0
-#define DEFAULT_USLEEP        1000	/* MK: Changed from 10 msecs to 1 msec == 1000 microsecs. for lower latency. Can't go lower than 1 msec on Windoze.  :-( */
+#define DEFAULT_USLEEP	    1000
 
 /******* NON WINDOWS DEFINES *********/
 #else
@@ -24,7 +34,7 @@
 #define IFUNIX(dothis) dothis
 
 #include <errno.h>
-#define s_errno errno		// ?? Is this OK ??
+#define s_errno errno
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,14 +47,13 @@
 #include <netinet/tcp.h>
 
 #define nonblockingsocket(s)  fcntl(s,F_SETFL,O_NONBLOCK)
-#define DEFAULT_USLEEP        500	/* MK: Changed from 10 msecs to 0.5 msec == 500 microsecs. for lower latency. Should not be a problem on good OS/X and Linux :-) */
+#define DEFAULT_USLEEP        500
 #endif
 
 #ifndef INADDR_NONE
 #define INADDR_NONE (-1)
 #endif
 
-// Do this hack cause SIGPIPE that kills matlab on any platform???
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
@@ -192,7 +201,7 @@ int searchFreeCon(void){
 		if(g_ConList[i].status == STATUS_FREE)
 			return i;
 	}
-    mexErrMsgTxt("No free connection!");
+	mexErrMsgTxt("No free connection!");
 	return -1;
 }
 
@@ -228,7 +237,7 @@ int closeAll (void)
 	int flag = 0;
 	int i;
 	for (i=0; i<MAX_CON; i++){
-	    if (g_ConList[i].fid >= 0) {	/* Already closed?? */
+		if (g_ConList[i].fid >= 0) {	/* Already closed?? */
 			closeCon(i);
 			flag = 1;
 		}
@@ -270,8 +279,8 @@ int tcpConnect(const char *hostname, const int port)
 	}
 	setsockopt(g_ConList[g_CurrentCon].fid, IPPROTO_TCP, TCP_NODELAY, (void*) &nodelay_flag, sizeof(int));
 	if(connect(g_ConList[g_CurrentCon].fid,
-	           (struct sockaddr*)&g_ConList[g_CurrentCon].remote_addr,
-	           sizeof(struct sockaddr)) == -1){
+			   (struct sockaddr*)&g_ConList[g_CurrentCon].remote_addr,
+			   sizeof(struct sockaddr)) == -1){
 		closeCon(g_CurrentCon);
 		return -1;
 	}
@@ -336,10 +345,10 @@ int tcpiplisten (void)
 	if ((new_fd=accept (sock_fd,
 		 (struct sockaddr *) &g_ConList[g_CurrentCon].remote_addr,
 		 &sin_size)) > -1)
-    	break;
-    if (timeoutat <= myNow ())
-    	return -1;
-    usleep (DEFAULT_USLEEP);
+		break;
+	if (timeoutat <= myNow ())
+		return -1;
+	usleep (DEFAULT_USLEEP);
 	}
 	nonblockingsocket(new_fd);	/* Non blocking read! */
 	setsockopt (new_fd, SOL_SOCKET, SO_KEEPALIVE, (void *) 1, 0);	/* realy needed? */
@@ -351,9 +360,7 @@ int tcpiplisten (void)
 
 int readbuff (void)
 {
-	const double timeoutat = myNow () + g_ConList[g_CurrentCon].readtimeout;
 	int retval = -1;
-	double start = myNow();
 
 	if (0 == IS_STATUS_IO_OK (g_ConList[g_CurrentCon].status))
 		return -1;
@@ -376,7 +383,7 @@ int readbuff (void)
 		if (retval > 0) {
 			g_ConList[g_CurrentCon].remote_addr.sin_addr = my_addr.sin_addr;
 			g_ConList[g_CurrentCon].remote_addr.sin_port = htons ((unsigned short int)
-					       ntohs (my_addr.sin_port));
+						   ntohs (my_addr.sin_port));
 		}
 	}
 	if (retval == 0) {
@@ -406,7 +413,7 @@ int writedata(int len)
 	int lastsize = 1000000;
 
 	if (g_ConList[g_CurrentCon].status < STATUS_IO_OK)
-	    return 0;
+		return 0;
 	while (sentlen < len) {
 		if (lastsize < 1000)
 			usleep (DEFAULT_USLEEP);
@@ -414,16 +421,16 @@ int writedata(int len)
 		lastsize = retval > 0 ? retval : 0;
 		sentlen += lastsize;
 		
-	    if (retval < 0 && s_errno != EWOULDBLOCK) {
-	    	g_ConList[g_CurrentCon].status = STATUS_NOCONNECT;
-	    	perror ("sendto() / send()");
-	    	mexPrintf ("\nREMOTE HOST DISCONNECTED\n");
-	    	break;
-	    }
-	    if (!IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status) && sentlen == len)
-	    	break;
-	    if (timeoutat <= myNow ())
-	    	break;
+		if (retval < 0 && s_errno != EWOULDBLOCK) {
+			g_ConList[g_CurrentCon].status = STATUS_NOCONNECT;
+			perror ("sendto() / send()");
+			mexPrintf ("\nREMOTE HOST DISCONNECTED\n");
+			break;
+		}
+		if (!IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status) && sentlen == len)
+			break;
+		if (timeoutat <= myNow ())
+			break;
 	}
 	return sentlen;
 }
@@ -443,11 +450,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	if(!g_hasInitialized){
 #ifdef WIN32
 		WORD wVersionRequested;
-	    WSADATA wsaData;
-	    int wsa_err;
-	    wVersionRequested = MAKEWORD (2, 0);
-	    wsa_err = WSAStartup (wVersionRequested, &wsaData);
-	    if (wsa_err)
+		WSADATA wsaData;
+		int wsa_err;
+		wVersionRequested = MAKEWORD (2, 0);
+		wsa_err = WSAStartup (wVersionRequested, &wsaData);
+		if (wsa_err)
 			mexErrMsgTxt ("Error starting WINSOCK32.");
 #endif
 		mexAtExit (CleanUpMex);
@@ -523,29 +530,36 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			closeCon(g_CurrentCon);
 			return;
 		}else if(strcmp("READ",funcstr)==0){
-		    if (IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status)){
-    			int readlen = readbuff();
-    			if(readlen>0){
-	    			double start = myNow();
-	    			mwSize dims[2];
-	    			int i;
-	    			dims[0] = 1;
-	    			dims[1] = readlen;
-	    			if(findOptionString("UINT8")==1){
-	    				g_pOutputs[0]=mxCreateNumericArray(2,dims,mxUINT8_CLASS,mxREAL);
-	    				unsigned char *p = (unsigned char *)mxGetData(g_pOutputs[0]);
-	    				for(i=0; i<readlen; i++){
-	    					p[i] = g_ConList[g_CurrentCon].read.ptr[i];
-	    				}
-	    			}else{
-	    				g_pOutputs[0]=mxCreateNumericArray(2,dims,mxCHAR_CLASS,mxREAL);
-	    				mxChar *p = (mxChar *)mxGetData(g_pOutputs[0]);
-	    				for(i=0; i<readlen; i++){
-	    					p[i] = g_ConList[g_CurrentCon].read.ptr[i];
-	    				}
-	    			}
-    			}
-    		}
+			if (IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status)){
+				int readlen = readbuff();
+				int i;
+				mwSize dims[2];
+				if(readlen>0){
+					dims[0] = 1;
+					dims[1] = readlen;
+					if(findOptionString("UINT8")==1){
+						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxUINT8_CLASS,mxREAL);
+						unsigned char *p = (unsigned char *)mxGetData(g_pOutputs[0]);
+						for(i=0; i<readlen; i++){
+							p[i] = g_ConList[g_CurrentCon].read.ptr[i];
+						}
+					}else{
+						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxCHAR_CLASS,mxREAL);
+						mxChar *p = (mxChar *)mxGetData(g_pOutputs[0]);
+						for(i=0; i<readlen; i++){
+							p[i] = g_ConList[g_CurrentCon].read.ptr[i];
+						}
+					}
+				}else{
+					dims[0] = 0;
+					dims[1] = 0;
+					if(findOptionString("UINT8")==1){
+						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxUINT8_CLASS,mxREAL);
+					}else{
+						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxCHAR_CLASS,mxREAL);
+					}
+				}
+			}
 			return;
 		}else if(strcmp("WRITE",funcstr)==0){
 			if (IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status)){
