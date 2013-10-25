@@ -204,7 +204,7 @@ function res = sgttbx_openDataFile(sockets, fname, overwrite)
 		res = -1;
 		return;
 	end
-	command = ['openDataFile',0x00,fname,0x00,num2str(overwrite)];
+	command = ['openDataFile',0,fname,0,num2str(overwrite)];
 	res = sgttbx_sendCommand(sockets, command);
 
 function res = sgttbx_closeDataFile(sockets)
@@ -222,17 +222,17 @@ function res = sgttbx_sendCommand(sockets, command)
 		return;
 	end
 	%fdisp(stderr,command);
-	command(end+1) = 0x00;
+	command(end+1) = 0;
 	%start = GetSecs();
 	sgttbx_net(sockets.sendcon, 'write', command);
 	%fdisp(stderr,1000*(GetSecs()-start));
 	res = 0;
 
 function res = sgttbx_sendMessage(sockets, message);
-	res = sgttbx_sendCommand(sockets, ['insertMessage',0x00,message]);
+	res = sgttbx_sendCommand(sockets, ['insertMessage',0,message]);
 
 function msg = sgttbx_getCurrentMenu(sockets)
-	msg = '';This file(s) is part of the tcp_udp_ip toolbox (C) Peter Rydesater et al.
+	msg = '';
 	if ~isstruct(sockets)
 		return
 	end
@@ -242,7 +242,7 @@ function msg = sgttbx_getCurrentMenu(sockets)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			msg = data(1:term(1)-1);
 			return;
@@ -262,7 +262,7 @@ function img = sgttbx_getCameraImage(param, sockets)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			img = [img, data(1:term(1)-1)];
 			break;
@@ -348,10 +348,10 @@ function res = sgttbx_calibrationLoop(param, sockets)
 		if keyCode(KbName('x'))==1
 			if showCalResults == 1
 				showCalResults = 0;
-				sgttbx_sendCommand(sockets,['toggleCalResult',0x00,'0']);
+				sgttbx_sendCommand(sockets,['toggleCalResult',0,'0']);
 			else
 				showCalResults = 1;
-				sgttbx_sendCommand(sockets,['toggleCalResult',0x00,'1']);
+				sgttbx_sendCommand(sockets,['toggleCalResult',0,'1']);
 			end
 			WaitSecs(0.5);
 		end
@@ -378,7 +378,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 			else
 				Screen('FillRect',param.wptr,0);
 			end	
-			Screen('DrawText',param.wptr,calmsgstr,(param.wrect(3)-param.imageWidth)/2,\
+			Screen('DrawText',param.wptr,calmsgstr,(param.wrect(3)-param.imageWidth)/2,...
 				(param.wrect(4)+param.imageHeight)/2+10,[255, 255, 255, 255]);
 		else
 			if showCameraImage==1
@@ -387,23 +387,23 @@ function res = sgttbx_calibrationLoop(param, sockets)
 				Screen('DrawTexture', param.wptr, imgtex);
 				Screen('Close',imgtex);
 			end
-			Screen('DrawText',param.wptr,msgstr,(param.wrect(3)-param.imageWidth)/2,\
+			Screen('DrawText',param.wptr,msgstr,(param.wrect(3)-param.imageWidth)/2,...
 				(param.wrect(4)+param.imageHeight)/2+10,[255, 255, 255, 255]);
 		end
 		Screen('Flip', param.wptr);
 	end
 
 function res = sgttbx_startRecording(sockets, message, wait)
-	res = sgttbx_sendCommand(sockets,['startRecording',0x00,message]);
+	res = sgttbx_sendCommand(sockets,['startRecording',0,message]);
 	WaitSecs(wait);
 
 function res = sgttbx_stopRecording(sockets, message, wait)
-	res = sgttbx_sendCommand(sockets,['stopRecording',0x00,message]);
+	res = sgttbx_sendCommand(sockets,['stopRecording',0,message]);
 	WaitSecs(wait);
 	
 function pos = sgttbx_getEyePosition(sockets, n, timeout)
 	pos = {[-10000,-10000],0};
-	sgttbx_sendCommand(sockets, ['getEyePosition',0x00,num2str(n)]);
+	sgttbx_sendCommand(sockets, ['getEyePosition',0,num2str(n)]);
 	result = [];
 	startTime = GetSecs();
 	
@@ -412,7 +412,7 @@ function pos = sgttbx_getEyePosition(sockets, n, timeout)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			result = [result; data(1:term(1)-1)];
 			break;
@@ -440,7 +440,7 @@ function res = isBinocularMode(sockets)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			msg = data(1:term(1)-1);
 			if msg(1)=='1'
@@ -453,10 +453,10 @@ function res = isBinocularMode(sockets)
 	end
 
 function res = sgttbx_doCalibration(param, sockets)
-	res = sgttbx_sendCommand(sockets, ['startCal',0x00,\
-		num2str(param.calArea(1)),',',\
-		num2str(param.calArea(2)),',',\
-		num2str(param.calArea(3)),',',\
+	res = sgttbx_sendCommand(sockets, ['startCal',0,...
+		num2str(param.calArea(1)),',',...
+		num2str(param.calArea(2)),',',...
+		num2str(param.calArea(3)),',',...
 		num2str(param.calArea(4))]);
 	if res<0
 		return
@@ -499,9 +499,9 @@ function res = sgttbx_doCalibration(param, sockets)
 		if t<param.caltargetMotionDuration
 			p1 = t/param.caltargetMotionDuration;
 			p2 = 1.0-t/param.caltargetMotionDuration;
-			cx = p1*param.calTargetPos(index(currentTargetPosition),1) + \
+			cx = p1*param.calTargetPos(index(currentTargetPosition),1) + ...
 				p2*param.calTargetPos(index(prevTargetPosition),1);
-			cy = p1*param.calTargetPos(index(currentTargetPosition),2) + \
+			cy = p1*param.calTargetPos(index(currentTargetPosition),2) + ...
 				p2*param.calTargetPos(index(prevTargetPosition),2);
 		else
 			cx = param.calTargetPos(index(currentTargetPosition),1);
@@ -509,10 +509,10 @@ function res = sgttbx_doCalibration(param, sockets)
 		end
 		
 		if calCheckList(prevTargetPosition)==0 && t>param.caltargetMotionDuration+param.calGetSampleDelay
-			sgttbx_sendCommand(sockets, ['getCalSample',0x00,\
-				num2str(param.calTargetPos(index(currentTargetPosition),1)),',',\
-				num2str(param.calTargetPos(index(currentTargetPosition),2)),',',\
-				num2str(param.numSamplesPerTrgpos),0x00]);
+			sgttbx_sendCommand(sockets, ['getCalSample',0,...
+				num2str(param.calTargetPos(index(currentTargetPosition),1)),',',...
+				num2str(param.calTargetPos(index(currentTargetPosition),2)),',',...
+				num2str(param.numSamplesPerTrgpos),0]);
 			calCheckList(prevTargetPosition) = 1;
 		end
 		
@@ -524,10 +524,10 @@ function res = sgttbx_doCalibration(param, sockets)
 	sgttbx_sendCommand(sockets,'endCal');
 
 function res = sgttbx_doValidation(param, sockets)
-	res = sgttbx_sendCommand(sockets, ['startVal',0x00,\
-		num2str(param.calArea(1)),',',\
-		num2str(param.calArea(2)),',',\
-		num2str(param.calArea(3)),',',\
+	res = sgttbx_sendCommand(sockets, ['startVal',0,...
+		num2str(param.calArea(1)),',',...
+		num2str(param.calArea(2)),',',...
+		num2str(param.calArea(3)),',',...
 		num2str(param.calArea(4))]);
 	if res<0
 		return
@@ -577,9 +577,9 @@ function res = sgttbx_doValidation(param, sockets)
 		if t<param.caltargetMotionDuration
 			p1 = t/param.caltargetMotionDuration;
 			p2 = 1.0-t/param.caltargetMotionDuration;
-			cx = p1*valTargetPos(index(currentTargetPosition),1) + \
+			cx = p1*valTargetPos(index(currentTargetPosition),1) + ...
 				p2*valTargetPos(index(prevTargetPosition),1);
-			cy = p1*valTargetPos(index(currentTargetPosition),2) + \
+			cy = p1*valTargetPos(index(currentTargetPosition),2) + ...
 				p2*valTargetPos(index(prevTargetPosition),2);
 		else
 			cx = valTargetPos(index(currentTargetPosition),1);
@@ -587,10 +587,10 @@ function res = sgttbx_doValidation(param, sockets)
 		end
 		
 		if calCheckList(prevTargetPosition)==0 && t>param.caltargetMotionDuration+param.calGetSampleDelay
-			sgttbx_sendCommand(sockets, ['getCalSample',0x00,\
-				num2str(valTargetPos(index(currentTargetPosition),1)),',',\
-				num2str(valTargetPos(index(currentTargetPosition),2)),',',\
-				num2str(param.numSamplesPerTrgpos),0x00]);
+			sgttbx_sendCommand(sockets, ['getCalSample',0,...
+				num2str(valTargetPos(index(currentTargetPosition),1)),',',...
+				num2str(valTargetPos(index(currentTargetPosition),2)),',',...
+				num2str(param.numSamplesPerTrgpos),0]);
 			calCheckList(prevTargetPosition) = 1;
 		end
 		
@@ -610,7 +610,7 @@ function offscr = sgttbx_drawCalResults(param, sockets, calimgtex, timeout)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			result = [result, data(1:term(1)-1)];
 			break;
@@ -644,7 +644,7 @@ function res = sgttbx_getCalResults(sockets, timeout)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			result = [result, data(1:term(1)-1)];
 			break;
@@ -673,7 +673,7 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			result = [result, data(1:term(1)-1)];
 			break;
@@ -690,8 +690,10 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 		return;
 	end
 	
-	cr = find(result==0x0D);
-	lf = find(result==0x0A);
+	%cr = find(result==0x0D);
+	%lf = find(result==0x0A);
+	cr = regexp(result,'\r');
+	lf = regexp(result,'\n');
 	if length(lf)>0 %LF only or CR+LF
 		nMsg = length(lf)+1;
 		sep = [0,lf,length(result)+1];
@@ -712,8 +714,8 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 			nEmpty = [nEmpty,i];
 			continue
 		end
-		res(i,1) = str2num(msgstr(c(1)+1:c(2)-1));
-		res(i,2) = msgstr(c(2)+1:end);
+		res(i,1) = { str2num(msgstr(c(1)+1:c(2)-1)) };
+		res(i,2) = { msgstr(c(2)+1:end) };
 	end
 	if length(nEmpty)>0
 		for i=length(nEmpty):-1:1
@@ -723,7 +725,7 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 
 function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 	res = [];
-	sgttbx_sendCommand(sockets, ['getWholeEyePositionList', 0x00, num2str(getPupil)]);
+	sgttbx_sendCommand(sockets, ['getWholeEyePositionList', 0, num2str(getPupil)]);
 	result = [];
 	startTime = GetSecs();
 	while 1
@@ -731,7 +733,7 @@ function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			result = [result, data(1:term(1)-1)];
 			break;
@@ -757,7 +759,7 @@ function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 	
 function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 	res = [];
-	sgttbx_sendCommand(sockets, ['getEyePositionList', 0x00, num2str(n), 0x00, num2str(getPupil)]);
+	sgttbx_sendCommand(sockets, ['getEyePositionList', 0, num2str(n), 0, num2str(getPupil)]);
 	result = [];
 	startTime = GetSecs();
 	while 1
@@ -765,7 +767,7 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 		if length(data)==0
 			continue
 		end
-		term = find(data==0x00);
+		term = find(data==0);
 		if term>=0
 			result = [result, data(1:term(1)-1)];
 			break;
