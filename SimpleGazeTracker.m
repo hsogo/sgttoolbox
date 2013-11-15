@@ -300,6 +300,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 	showCalResults = 0;
 	isCalDone = 0;
 	calimgtex = -1;
+	
 	while 1
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('RightArrow'))==1
@@ -382,7 +383,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 				(param.wrect(4)+param.imageHeight)/2+10,[255, 255, 255, 255]);
 		else
 			if showCameraImage==1
-				img = sgttbx_getCameraImage(param, sockets);
+				img = uint8(sgttbx_getCameraImage(param, sockets));
 				imgtex = Screen('MakeTexture', param.wptr, img);
 				Screen('DrawTexture', param.wptr, imgtex);
 				Screen('Close',imgtex);

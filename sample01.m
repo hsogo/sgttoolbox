@@ -34,13 +34,13 @@ try
 	param.imageWidth = imageWidth;
 	param.imageHeight = imageHeight;
 	param.calArea = wrect;
-	param.calTargetPos = [0,0;-400,-300; 0,-300; 400,-300;\
-	                          -400,   0; 0,   0; 400,   0;\
+	param.calTargetPos = [0,0;-400,-300; 0,-300; 400,-300;...
+	                          -400,   0; 0,   0; 400,   0;...
 	                          -400, 300; 0, 300; 400, 300];
 	for i=1:length(param.calTargetPos)
 		param.calTargetPos(i,:) = param.calTargetPos(i,:)+[cx,cy];
 	end
-	param = SimpleGazeTracker('UpdateParameters',param);
+	param = SimpleGazeTracker('UpdateParameters',param)
 	
 	%-----------------------------------------------------------------
 	% Connect to SimpleGazeTracker and open data file.
@@ -52,7 +52,6 @@ try
 		quit
 	end
 	SimpleGazeTracker('OpenDataFile','data.csv',0); %datafile is not overwritten.
-	
 	%-----------------------------------------------------------------
 	% Perform calibration.
 	%-----------------------------------------------------------------
@@ -64,7 +63,7 @@ try
 			Screen('CloseAll');
 			return;
 		end
-		if res{1}=='ESCAPE' && res{2}==1
+		if strcmp(res{1},'ESCAPE') && res{2}==1
 			%Leave from loop if calibration has been performed (res{2}==1).
 			break; 
 		end
@@ -154,7 +153,7 @@ try
 	wholegazeposlist = SimpleGazeTracker('GetWholeEyePositionList',1,3.0);
 	fprintf(fid,'GetWholeEyePositionList test\n');
 	for i=1:length(wholegazeposlist)
-		fprintf(fid,'%f,%.1f,%.1f\n',\
+		fprintf(fid,'%f,%.1f,%.1f\n',...
 			wholegazeposlist(i,1),wholegazeposlist(i,2),wholegazeposlist(i,3));
 	end
 	fprintf(fid,'\n');
@@ -165,7 +164,7 @@ try
 	for i=1:length(gazeposlist)
 		fprintf(fid,'Keypress %d\n',i);
 		for j=1:length(gazeposlist{i})
-			fprintf(fid,'%f,%.1f,%.1f\n',\
+			fprintf(fid,'%f,%.1f,%.1f\n',...
 				gazeposlist{i}(j,1),gazeposlist{i}(j,2),gazeposlist{i}(j,3));
 		end
 	end

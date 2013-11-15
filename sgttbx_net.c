@@ -20,6 +20,7 @@
 #define IFWINDOWS(dothis) dothis
 #define IFUNIX(dothis)
 #include <winsock2.h>
+extern DWORD _stdcall timeGetTime(void);
 #define close(s) closesocket(s)
 #define nonblockingsocket(s) {unsigned long ctl = 1;ioctlsocket( s, FIONBIO, &ctl );}
 #define s_errno WSAGetLastError()
@@ -114,14 +115,14 @@ ConInfo g_ConList[MAX_CON];
 int g_CurrentCon = 0;
 
 #ifdef WIN32
-double myNow ()
+double myNow()
 {
 	double sec;
-	sec = ((double) timeGetTime ()) / 1000.0;
+	sec = ((double) timeGetTime()) / 1000.0;
 	return (sec);
 }
 #else
-double myNow ()
+double myNow()
 {
 	struct timeval tv;
 	double sec;
@@ -361,11 +362,11 @@ int tcpiplisten (void)
 int readbuff (void)
 {
 	int retval = -1;
-
+	int readlen = READ_BUFFER_SIZE;
+	
 	if (0 == IS_STATUS_IO_OK (g_ConList[g_CurrentCon].status))
 		return -1;
 	
-	int readlen = READ_BUFFER_SIZE;
 	if (IS_STATUS_CONNECTED (g_ConList[g_CurrentCon].status))
 		retval = recv(g_ConList[g_CurrentCon].fid, &g_ConList[g_CurrentCon].read.ptr[g_ConList[g_CurrentCon].read.pos],
 					   readlen, MSG_NOSIGNAL);
@@ -445,7 +446,11 @@ void CleanUpMex (void)
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	char funcstr[81];
+	char hostname[128];
+	int port, fd;
 	int i;
+	unsigned char *p;
+	mxChar *mxcp;
 	/*initialization*/
 	if(!g_hasInitialized){
 #ifdef WIN32
@@ -485,9 +490,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}else if(strcmp("TCPCONNECT",funcstr)==0){
 			if(g_NumInputs<3)
 				mexErrMsgTxt("Too few parameters");
-			char hostname[128];
 			mxGetString(g_pInputs[1], hostname, sizeof(hostname)-1);
-			const int port = (int)getScalarValue(g_pInputs[2]);
+			port = (int)getScalarValue(g_pInputs[2]);
 			g_CurrentCon = searchFreeCon();
 			if(g_CurrentCon>=0)
 				setReturnValue(0,tcpConnect(hostname, port));
@@ -497,7 +501,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}else if(strcmp("TCPSOCKET",funcstr)==0){
 			if(g_NumInputs<2)
 				mexErrMsgTxt("Too few parameters");
-			const int fd = tcpSocket((int)getScalarValue(g_pInputs[1]));
+			fd = tcpSocket((int)getScalarValue(g_pInputs[1]));
 			if(fd>=0){
 				g_CurrentCon = searchFreeCon();
 				initCon(fd,STATUS_TCP_SOCKET);
@@ -539,15 +543,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					dims[1] = readlen;
 					if(findOptionString("UINT8")==1){
 						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxUINT8_CLASS,mxREAL);
-						unsigned char *p = (unsigned char *)mxGetData(g_pOutputs[0]);
+						p = (unsigned char *)mxGetData(g_pOutputs[0]);
 						for(i=0; i<readlen; i++){
 							p[i] = g_ConList[g_CurrentCon].read.ptr[i];
 						}
 					}else{
 						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxCHAR_CLASS,mxREAL);
-						mxChar *p = (mxChar *)mxGetData(g_pOutputs[0]);
+						mxcp = (mxChar *)mxGetData(g_pOutputs[0]);
 						for(i=0; i<readlen; i++){
-							p[i] = g_ConList[g_CurrentCon].read.ptr[i];
+							mxcp[i] = g_ConList[g_CurrentCon].read.ptr[i];
 						}
 					}
 				}else{
