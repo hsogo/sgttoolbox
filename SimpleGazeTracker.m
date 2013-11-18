@@ -1,6 +1,8 @@
 function ret = SimpleGazeTracker(varargin)
 % SimpeGazeTracker toolbox 0.2.0 (compatible with SimpleGazeTracker 0.6.5)
 % Copyright (C) 2012-2013 Hiroyuki Sogo.
+% Thanks to Ryuta Iseki and Yuta Kawabe for Matlab support.
+% 
 % Distributed under the terms of the GNU General Public License (GPL).
 % 
 % Usage:
@@ -53,7 +55,6 @@ function ret = SimpleGazeTracker(varargin)
 % 
 % %Get all gaze positions recorded in the latest recording.
 % msg = SimpleGazeTracker('GetWholeEyePositionList', getPupil, timeout)
-% 
 
 persistent sgttbx_param;
 persistent sgttbx_sockets;

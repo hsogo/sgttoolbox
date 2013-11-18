@@ -10,6 +10,9 @@
 % Build on Ubuntu/Octave (octaveX.X-header package is necessary)
 %   mex sgttbx_net.c
 %
+% Build on Windows/Matlab (LCC)
+%   mex -O sgttbx_net.c winmm.lib wsock32.lib
+%
 **********************************************************/
                                                           
 /******* GENERAL DEFINES *********/
