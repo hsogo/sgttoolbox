@@ -6,6 +6,10 @@
 % 
 % Part of this program is based on pnet.c Version2.0.5 + PTBMods
 % by Mario Kleiner.
+%
+% Build on Ubuntu/Octave (octaveX.X-header package is necessary)
+%   mex sgttbx_net.c
+%
 **********************************************************/
                                                           
 /******* GENERAL DEFINES *********/
@@ -321,7 +325,7 @@ int tcpSocket(int port)
 		close (sockfd);
 		return -1;
 	}
-	listen (sockfd, BACKLOG);
+	listen(sockfd, BACKLOG);
 	nonblockingsocket(sockfd);
 
 	/* Try to enable low-latency send/receive operations on socket: */
@@ -351,8 +355,7 @@ int tcpiplisten (void)
 	}
 	nonblockingsocket(new_fd);	/* Non blocking read! */
 	setsockopt(new_fd, SOL_SOCKET, SO_KEEPALIVE, (void *) 1, 0);	/* realy needed? */
-	g_ConList[g_CurrentCon].fid = new_fd;
-	g_ConList[g_CurrentCon].status = STATUS_TCP_SERVER;
+	initCon(new_fd,STATUS_TCP_SERVER);
 	return g_CurrentCon;
 }
 
@@ -535,7 +538,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				int readlen = readbuff();
 				int i;
 				mwSize dims[2];
-				mexPrintf("status:%d\treadlen:%d\n",g_ConList[g_CurrentCon].status,readlen);
 				if(readlen>0){
 					dims[0] = 1;
 					dims[1] = readlen;
@@ -564,7 +566,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					return;
 				}
 			}
-			mexPrintf("status %d\tNot connected.",g_ConList[g_CurrentCon].status);
 			return;
 		}else if(strcmp("WRITE",funcstr)==0){
 			if (IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status)){
