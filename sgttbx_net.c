@@ -341,18 +341,16 @@ int tcpiplisten (void)
 	int new_fd;
 	const int sock_fd = g_ConList[g_CurrentCon].fid;
 	int sin_size = sizeof (struct sockaddr_in);
-	searchFreeCon();
+	g_CurrentCon = searchFreeCon();
 	while (1) {
-	if ((new_fd=accept (sock_fd,
-		 (struct sockaddr *) &g_ConList[g_CurrentCon].remote_addr,
-		 &sin_size)) > -1)
-		break;
-	if (timeoutat <= myNow ())
-		return -1;
-	usleep (DEFAULT_USLEEP);
+		if ((new_fd=accept (sock_fd, (struct sockaddr *) &g_ConList[g_CurrentCon].remote_addr, &sin_size)) > -1)
+			break;
+		if (timeoutat <= myNow ())
+			return -1;
+		usleep (DEFAULT_USLEEP);
 	}
 	nonblockingsocket(new_fd);	/* Non blocking read! */
-	setsockopt (new_fd, SOL_SOCKET, SO_KEEPALIVE, (void *) 1, 0);	/* realy needed? */
+	setsockopt(new_fd, SOL_SOCKET, SO_KEEPALIVE, (void *) 1, 0);	/* realy needed? */
 	g_ConList[g_CurrentCon].fid = new_fd;
 	g_ConList[g_CurrentCon].status = STATUS_TCP_SERVER;
 	return g_CurrentCon;
@@ -364,12 +362,11 @@ int readbuff (void)
 	int retval = -1;
 	int readlen = READ_BUFFER_SIZE;
 	
-	if (0 == IS_STATUS_IO_OK (g_ConList[g_CurrentCon].status))
+	if (0 == IS_STATUS_IO_OK(g_ConList[g_CurrentCon].status))
 		return -1;
 	
-	if (IS_STATUS_CONNECTED (g_ConList[g_CurrentCon].status))
-		retval = recv(g_ConList[g_CurrentCon].fid, &g_ConList[g_CurrentCon].read.ptr[g_ConList[g_CurrentCon].read.pos],
-					   readlen, MSG_NOSIGNAL);
+	if (IS_STATUS_CONNECTED(g_ConList[g_CurrentCon].status))
+		retval = recv(g_ConList[g_CurrentCon].fid, &g_ConList[g_CurrentCon].read.ptr[g_ConList[g_CurrentCon].read.pos], readlen, MSG_NOSIGNAL);
 	else {
 		struct sockaddr_in my_addr;
 		int fromlen = sizeof (my_addr);
@@ -538,6 +535,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 				int readlen = readbuff();
 				int i;
 				mwSize dims[2];
+				mexPrintf("status:%d\treadlen:%d\n",g_ConList[g_CurrentCon].status,readlen);
 				if(readlen>0){
 					dims[0] = 1;
 					dims[1] = readlen;
@@ -553,6 +551,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 						for(i=0; i<readlen; i++){
 							mxcp[i] = g_ConList[g_CurrentCon].read.ptr[i];
 						}
+					return;
 					}
 				}else{
 					dims[0] = 0;
@@ -562,8 +561,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 					}else{
 						g_pOutputs[0]=mxCreateNumericArray(2,dims,mxCHAR_CLASS,mxREAL);
 					}
+					return;
 				}
 			}
+			mexPrintf("status %d\tNot connected.",g_ConList[g_CurrentCon].status);
 			return;
 		}else if(strcmp("WRITE",funcstr)==0){
 			if (IS_STATUS_TCP_CONNECTED (g_ConList[g_CurrentCon].status)){
