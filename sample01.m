@@ -4,7 +4,6 @@ ipAddress = input('SimpleGazeTracker address: ','s');
 imageWidth = input('Camera image width: ');
 imageHeight = input('Camera image height ');
 
-
 try
 
 	%-----------------------------------------------------------------
@@ -12,10 +11,8 @@ try
 	%   wptr and wrect are necessary to initialize SimpleGazeTracker
 	%   toolbox later.
 	%-----------------------------------------------------------------
-	%[wptr, wrect] = Screen('OpenWindow',0)
-	
-	disp('OpenWindow')
-	[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768])
+	[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768]);
+	%[wptr, wrect] = Screen('OpenWindow',0);
 	cx = wrect(3)/2;
 	cy = wrect(4)/2;
 	
@@ -40,16 +37,20 @@ try
 	for i=1:length(param.calTargetPos)
 		param.calTargetPos(i,:) = param.calTargetPos(i,:)+[cx,cy];
 	end
-	param = SimpleGazeTracker('UpdateParameters',param)
+	result = SimpleGazeTracker('UpdateParameters',param);
+    if result{1} < 0 %failed
+        disp('Could not update parameter. Abort.');
+        Screen('CloseAll');
+        return;
+    end
 	
 	%-----------------------------------------------------------------
 	% Connect to SimpleGazeTracker and open data file.
 	%-----------------------------------------------------------------
-	disp('Connect')
 	res = SimpleGazeTracker('Connect');
 	if res==-1 %connection failed
 		Screen('CloseAll');
-		quit
+		return;
 	end
 	SimpleGazeTracker('OpenDataFile','data.csv',0); %datafile is not overwritten.
 	%-----------------------------------------------------------------
@@ -87,14 +88,13 @@ try
 	for q = 1:360 %360 frames
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('Space'))==1
-			GetSecs()-previousKeyPressTime;
 			% prevent chattering...
 		    if GetSecs()-previousKeyPressTime > 0.2
 				SimpleGazeTracker('SendMessage','Space');
 				%get the latest 6 samples.
 				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.5);
-				if length(tmp)>0
-					gazeposlist(length(gazeposlist)+1) = tmp;
+				if ~isempty(tmp)
+					gazeposlist(length(gazeposlist)+1) = {tmp};
 				end
 				%update previousKeyPressTime
 				previousKeyPressTime = GetSecs();
