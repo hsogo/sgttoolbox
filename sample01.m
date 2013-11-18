@@ -11,8 +11,8 @@ try
 	%   wptr and wrect are necessary to initialize SimpleGazeTracker
 	%   toolbox later.
 	%-----------------------------------------------------------------
-	[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768]);
-	%[wptr, wrect] = Screen('OpenWindow',0);
+	%[wptr, wrect] = Screen('OpenWindow',0,[0,0,0],[0,0,1024,768]);
+	[wptr, wrect] = Screen('OpenWindow',0);
 	cx = wrect(3)/2;
 	cy = wrect(4)/2;
 	
