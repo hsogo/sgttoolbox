@@ -69,10 +69,11 @@ switch(varargin{1})
 		sgttbx_param = ret;
 		return;
 	case 'UpdateParameters'
-		if sgttbx_verifyparam(varargin{2})>=0
+        isvalid = sgttbx_verifyparam(varargin{2});
+		if isvalid>=0
 			sgttbx_param = varargin{2};
 		end
-		ret = sgttbx_param;
+		ret = {isvalid, sgttbx_param};
 		return;
 	case 'OpenDataFile'
 		ret = sgttbx_openDataFile(sgttbx_sockets, varargin{2}, varargin{3});
@@ -153,9 +154,6 @@ function param = sgttbx_initialize(arg)
 
 	sgttbx_param = param;
 
-function ret = sgttbx_updateparam(sgttbx_param, arg)
-	%verify parameters
-	ret = 0;
 
 function res = sgttbx_connect(sgttbx_param)
 	res = -1;
@@ -168,14 +166,14 @@ function res = sgttbx_connect(sgttbx_param)
 		disp('tcpconnect was Failed.')
 		return;
 	end
-	recvsock = sgttbx_net('tcpsocket',sgttbx_param.recvPort)
+	recvsock = sgttbx_net('tcpsocket',sgttbx_param.recvPort);
 	if recvsock < 0
 		disp('tcpsocket was Failed')
 		return;
 	end
 	startTime = GetSecs();
 	while GetSecs()-startTime<5
-		recvcon = sgttbx_net(recvsock, 'tcplisten')
+		recvcon = sgttbx_net(recvsock, 'tcplisten');
 		if recvcon>=0
 			break;
 		end
@@ -186,8 +184,7 @@ function res = sgttbx_connect(sgttbx_param)
 		return;
 	end
 	sgttbx_net(recvcon,'setreadtimeout',1.0);
-	disp('gethost');
-		[ip,port] = sgttbx_net(recvcon, 'gethost');
+	[ip,port] = sgttbx_net(recvcon, 'gethost');
 	disp(['Connected from ', num2str(ip(1)), '.', num2str(ip(2)), '.', num2str(ip(3)), '.', num2str(ip(4)), ':', num2str(port)])
 
 	sockets.recvsock = recvsock;
@@ -197,6 +194,77 @@ function res = sgttbx_connect(sgttbx_param)
 	return; 
 
 function res = sgttbx_verifyparam(newparam)
+    res = -1;
+    if ~(isnumeric(newparam.wrect) && length(newparam.wrect)==4)
+        disp('calArea must be an array of four numbers.')
+        return;
+    end
+    if ~ischar(newparam.IPAddress)
+        disp('IP address must be a string.')
+        return;
+    end
+    if ~(isnumeric(newparam.sendPort) && newparam.sendPort>0)
+        disp('sendPort must be a positive integer.')
+        return;
+    end
+    if ~(isnumeric(newparam.recvPort) && newparam.recvPort>0)
+        disp('recvPort must be a positive integer.')
+        return;
+    end
+    if ~(isnumeric(newparam.imageWidth) && newparam.imageWidth>0)
+        disp('imageWidth must be a positive integer.')
+        return;
+    end
+    if ~(isnumeric(newparam.imageHeight) && newparam.imageHeight>0)
+        disp('imageHeight must be a positive integer.')
+        return;
+    end
+    if ~(isnumeric(newparam.previewWidth) && newparam.previewWidth>0)
+        disp('previewWidth must be a positive integer.')
+        return;
+    end
+    if ~(isnumeric(newparam.previewHeight) && newparam.previewHeight>0)
+        disp('previewHeight must be a positive integer.')
+        return;
+    end
+    if ~(isfloat(newparam.validationShift) && newparam.validationShift>=0)
+        disp('validationShift must be zero or a positive number.')
+        return;
+    end
+    if ~(newparam.showCalDisplay==0 || newparam.showCalDisplay==1)
+        disp('showCalDisplay must be 0 or 1.')
+        return;
+    end
+    if ~(isnumeric(newparam.numSamplesPerTrgpos) && newparam.numSamplesPerTrgpos>0)
+        disp('numSamplesPerTrgpos must be a positive integer.')
+        return;
+    end
+    if ~(isfloat(newparam.caltargetMotionDuration) && newparam.caltargetMotionDuration>=0)
+        disp('caltargetMotionDuration must be zero or a positive number.')
+        return;
+    end
+    if ~(isfloat(newparam.caltargetDurationPerPos) && newparam.caltargetDurationPerPos>0)
+        disp('caltargetDurationPerPos must be a positive number.')
+        return;
+    end
+    if ~(isfloat(newparam.calGetSampleDelay) && newparam.calGetSampleDelay>=0)
+        disp('calGetSampleDelay must be zero or a positive number.')
+        return;
+    end
+    if newparam.caltargetDurationPerPos < newparam.caltargetMotionDuration + newparam.calGetSampleDelay
+        disp('caltargetDurationPerPos must be greater than newparam.caltargetMotionDuration + newparam.calGetSampleDelay.')
+        return;
+    end
+    if ~(isnumeric(newparam.calArea) && length(newparam.calArea)==4)
+        disp('calArea must be an array of four numbers.')
+        return;
+    end
+    for i=1:length(newparam.calTargetPos)
+        if ~(isnumeric(newparam.calTargetPos) && length(newparam.calTargetPos(i,:))==2)
+            disp('calTargetPos must be a numeric array of Nx2.')
+            return;
+        end
+    end
 	res = 0;
 
 function res = sgttbx_openDataFile(sockets, fname, overwrite)
@@ -228,7 +296,7 @@ function res = sgttbx_sendCommand(sockets, command)
 	%fdisp(stderr,1000*(GetSecs()-start));
 	res = 0;
 
-function res = sgttbx_sendMessage(sockets, message);
+function res = sgttbx_sendMessage(sockets, message)
 	res = sgttbx_sendCommand(sockets, ['insertMessage',0,message]);
 
 function msg = sgttbx_getCurrentMenu(sockets)
@@ -237,9 +305,10 @@ function msg = sgttbx_getCurrentMenu(sockets)
 		return
 	end
 	sgttbx_sendCommand(sockets, 'getCurrMenu');
+    startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -248,8 +317,12 @@ function msg = sgttbx_getCurrentMenu(sockets)
 			return;
 		else
 			msg = [msg, data];
+        end
+        
+		if GetSecs()-startTime > 0.1 %timeout
+			return
 		end
-	end
+    end
 
 function img = sgttbx_getCameraImage(param, sockets)
 	img = [];
@@ -259,7 +332,7 @@ function img = sgttbx_getCameraImage(param, sockets)
 	sgttbx_sendCommand(sockets, 'getImageData');
 	while 1
 		data = sgttbx_net(sockets.recvcon, 'read', 'uint8');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -279,7 +352,7 @@ function img = sgttbx_getCameraImage(param, sockets)
 		img = img(1:expectedSize);
 	end
 	
-	img = transpose(reshape(img,param.imageWidth,param.imageHeight));
+	img = transpose(reshape(uint8(img),param.imageWidth,param.imageHeight));
 
 function res = sgttbx_calibrationLoop(param, sockets)
 	res = {'q',0};
@@ -383,7 +456,7 @@ function res = sgttbx_calibrationLoop(param, sockets)
 				(param.wrect(4)+param.imageHeight)/2+10,[255, 255, 255, 255]);
 		else
 			if showCameraImage==1
-				img = uint8(sgttbx_getCameraImage(param, sockets));
+				img = sgttbx_getCameraImage(param, sockets);
 				imgtex = Screen('MakeTexture', param.wptr, img);
 				Screen('DrawTexture', param.wptr, imgtex);
 				Screen('Close',imgtex);
@@ -410,7 +483,7 @@ function pos = sgttbx_getEyePosition(sockets, n, timeout)
 	
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -426,7 +499,7 @@ function pos = sgttbx_getEyePosition(sockets, n, timeout)
 		end
 	end
 	
-	if length(result)>0
+	if ~isempty(result)
 		resnum = str2num(result);
 		if length(resnum)==3
 			pos{1} = resnum(1:2);
@@ -438,7 +511,7 @@ function res = isBinocularMode(sockets)
 	sgttbx_sendCommand(sockets, 'isBinocularMode');
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -608,7 +681,7 @@ function offscr = sgttbx_drawCalResults(param, sockets, calimgtex, timeout)
 	startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -627,7 +700,7 @@ function offscr = sgttbx_drawCalResults(param, sockets, calimgtex, timeout)
 		Screen('Close',calimgtex);
 	end
 	
-	if length(result)>0
+	if ~isempty(result)
 		points = str2num(result);
 		[offscr, rect] = Screen('OpenOffscreenWindow', param.wptr, 127, param.wrect);
 		for iter=1:length(points)/4
@@ -642,7 +715,7 @@ function res = sgttbx_getCalResults(sockets, timeout)
 	startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -657,7 +730,7 @@ function res = sgttbx_getCalResults(sockets, timeout)
 			break;
 		end
 	end
-	if length(result)>0
+	if ~isempty(result)
 		result = str2num(result);
 		if length(result)==2
 			res = ['AvgError: ', num2str(result(1)), '  MaxError: ', num2str(result(2))];
@@ -671,7 +744,7 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 	startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -687,7 +760,7 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 		end
 	end
 	
-	if length(result)==0 %no messages
+	if isempty(result) %no messages
 		return;
 	end
 	
@@ -695,10 +768,10 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 	%lf = find(result==0x0A);
 	cr = regexp(result,'\r');
 	lf = regexp(result,'\n');
-	if length(lf)>0 %LF only or CR+LF
+	if ~isempty(lf) %LF only or CR+LF
 		nMsg = length(lf)+1;
 		sep = [0,lf,length(result)+1];
-	elseif length(cr)>0 %CR only
+	elseif ~isempty(cr) %CR only
 		nMsg = length(cr)+1;
 		sep = [0,cr,length(result)+1];
 	else %single line
@@ -711,14 +784,14 @@ function res = sgttbx_getWholeMessageList(sockets, timeout)
 	for i=1:nMsg
 		msgstr = result(sep(i)+1:sep(i+1)-1);
 		c = find(msgstr==',');
-		if length(c)==0
+		if isempty(c)
 			nEmpty = [nEmpty,i];
 			continue
 		end
 		res(i,1) = { str2num(msgstr(c(1)+1:c(2)-1)) };
 		res(i,2) = { msgstr(c(2)+1:end) };
 	end
-	if length(nEmpty)>0
+	if ~isempty(nEmpty)
 		for i=length(nEmpty):-1:1
 			res(i,:)=[];
 		end
@@ -731,7 +804,7 @@ function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 	startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -747,7 +820,7 @@ function res = sgttbx_getWholeEyePositionList(sockets, getPupil, timeout)
 		end
 	end
 	
-	if length(result)==0 %no data
+	if isempty(result) %no data
 		return;
 	end
 	
@@ -765,7 +838,7 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 	startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
-		if length(data)==0
+		if isempty(data)
 			continue
 		end
 		term = find(data==0);
@@ -781,7 +854,7 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 		end
 	end
 	
-	if length(result)==0 %no data
+	if isempty(result) %no data
 		return;
 	end
 	
