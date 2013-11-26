@@ -92,7 +92,7 @@ try
 		    if GetSecs()-previousKeyPressTime > 0.2
 				SimpleGazeTracker('SendMessage','Space');
 				%get the latest 6 samples.
-				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.5);
+				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.02);
 				if ~isempty(tmp)
 					gazeposlist(length(gazeposlist)+1) = {tmp};
 				end
@@ -113,7 +113,7 @@ try
 		
 		st = GetSecs();
 		%get current gaze position (moving average of 3 samples).
-		pos = SimpleGazeTracker('GetEyePosition',3,0.5);
+		pos = SimpleGazeTracker('GetEyePosition',3,0.02);
 		geteyeposdelaylist = [geteyeposdelaylist, 1000*(GetSecs()-st)];
 		
 		stimx = 200*cos(q/180*pi)+cx;

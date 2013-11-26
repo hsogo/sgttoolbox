@@ -12,7 +12,7 @@ function ret = SimpleGazeTracker(varargin)
 % param = SimpleGazeTracker('Initialize', wptr, wrect);
 % 
 % %Update SimpleGazeTracker toolbox parameters
-% param = SimpleGazeTracker('UpdateParameters',param);
+% ret = SimpleGazeTracker('UpdateParameters',param);
 % 
 % ===== Open/close connection with SimpleGazeTracker =====
 % %Open TCP/IP connection with SimpleGazeTracker
