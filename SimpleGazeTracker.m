@@ -55,6 +55,11 @@ function ret = SimpleGazeTracker(varargin)
 % 
 % %Get all gaze positions recorded in the latest recording.
 % msg = SimpleGazeTracker('GetWholeEyePositionList', getPupil, timeout)
+%
+% ===== Off-line data analysis =====
+% %Import SimpleGazeTracker CSV file.
+% data = SimpleGazeTracker('ImportDataFile', filename)
+%
 
 persistent sgttbx_param;
 persistent sgttbx_sockets;
@@ -125,6 +130,8 @@ switch(varargin{1})
 	case 'GetWholeMessageList'
 		ret = sgttbx_getWholeMessageList(sgttbx_sockets, varargin{2});
 		return;
+	case 'ImportdDataFile'
+		ret = sgttbx_importDataFile(varargin{2})
 	otherwise
 		disp(['Invalid command. (', varargin{1}, ')'])
 end
@@ -866,4 +873,230 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 		res = transpose(reshape(points,3,length(points)/3)); %3=(timestamp, x, y)
 	end
 	
+function res = sgttbx_importDataFile(filename)
+	if ~ischar(filename)
+		disp(['parameter must be a string'])
+		res = []
+		return
+	end
+	fp = fopen(filename,"r");
+	if fp<0
+		disp(['Could not oepn ', filename,'.'])
+		res = []
+		return
+	end
+	
+	DATA = [];
+	
+	inTrial = false;
+	M = {};
+	T = [];
+	LHV = [];
+	RHV = [];
+	LP = [];
+	RP = [];
+	HV = [];
+	P = [];
+	C = [];
+	PARAM = [];
+	
+	recordedEye = 'L';
+	idxLX = 1;
+	idxLY = 2;
+	idxRX = 3;
+	idxRY = 4;
+	idxLP = -1;
+	idxRP = -1;
+	idxX = 1;
+	idxY = 2;
+	idxP = -1;
+	idxC = -1;
+	
+	l = fgetl(fp);
+	while ischar(l)
+		data = sgttbx_cnv_split(l,',');
+		if data{1}(1)=='#' %messages and parameters
+			if strcmp(data{1},'#START_REC')
+				inTrial = true;
+				
+				D.STARTREC = data(2:end);
+			elseif strcmp(data{1},'#STOP_REC')
+				inTrial = false;
+				if recordedEye == 'B'
+					D.T = T;
+					D.L = LHV;
+					D.R = RHV;
+					D.LP = LP;
+					D.RP = RP;
+					D.Message = M;
+				else
+					if recordedEye == 'L'
+						D.T = T;
+						D.L = HV;
+						D.R = [];
+						D.LP = P;
+						D.RP = [];
+						D.MSG = M;
+						D.C = C;
+					else %recordedEye == 'R'
+						D.T = T;
+						D.L = [];
+						D.R = HV;
+						D.LP = [];
+						D.RP = P;
+						D.MSG = M;
+						D.C = C;
+					end
+				end
+				
+				%D.PARAM = PARAM;
+				for j=1:size(PARAM)(1)
+					paramname = PARAM{j,1}(2:end);
+					paramvalue = PARAM{j,2};
+					eval(['D.PARAM.', paramname, '=paramvalue'])
+				end
+				
+				DATA = [DATA, D];
+				M = {};
+				T = [];
+				LHV = [];
+				RHV = [];
+				LP = [];
+				RP = [];
+				HV = [];
+				P = [];
+				C = [];
+				%Don't reset PARAM!
+				
+			elseif strcmp(data{1},'#MESSAGE')
+				i = size(M)(1)+1;
+				M{i,1} = str2num(data{2});
+				M{i,2} = data{3};
+			
+			elseif strcmp(data{1},'#DATAFORMAT')
+				idxLX = idxLY = idxRX = idxRY = idxLP = idxRP = -1;
+				idxX = idxY = idxP = -1;
+				idxC = -1;
+				for i=2:length(data)
+					if strcmp(data{i},'T')
+						idxT = i-1;
+					elseif strcmp(data{i},'LX')
+						idxLX = i-1;
+					elseif strcmp(data{i},'LY')
+						idxLY = i-1;
+					elseif strcmp(data{i},'RX')
+						idxRX = i-1;
+					elseif strcmp(data{i},'RY')
+						idxRY = i-1;
+					elseif strcmp(data{i},'LP')
+						idxLP = i-1;
+					elseif strcmp(data{i},'RP')
+						idxRP = i-1;
+					elseif strcmp(data{i},'X')
+						idxX = i-1;
+					elseif strcmp(data{i},'Y')
+						idxY = i-1;
+					elseif strcmp(data{i},'P')
+						idxP = i-1;
+					elseif strcmp(data{i},'C')
+						idxC = i-1;
+					end
+				end
+				
+				i = size(PARAM)(1)+1;
+				j = size(data)(2);
+				PARAM{i,1} = data{1};
+				if j==2
+					PARAM{i,2} = data{2};
+				elseif j>2
+					PARAM{i,2} = data(2:end);
+				end
+			elseif strcmp(data{1}, '#RECORDED_EYE')
+				recordedEye = data{2};
+				
+				i = size(PARAM)(1)+1;
+				j = size(data)(2);
+				PARAM{i,1} = data{1};
+				if j==2
+					PARAM{i,2} = data{2};
+				elseif j>2
+					PARAM{i,2} = data(2:end);
+				end
+			elseif strcmp(data{1}, '#CALPOINT')
+			
+			elseif strcmp(data{1}, '#XPARAM')
+			
+			elseif strcmp(data{1}, '#YPARAM')
+			
+			else % other options
+				i = size(PARAM)(1)+1;
+				j = size(data)(2);
+				PARAM{i,1} = data{1};
+				if j==2
+					PARAM{i,2} = data{2};
+				elseif j>2
+					PARAM{i,2} = data(2:end);
+				end
+			end
+			
+		else % gaze data
+			T = [T; str2num(data{idxT})];
+			if recordedEye == 'B'
+				xL = str2num(data{idxLX});
+				yL = str2num(data{idxLY});
+				xR = str2num(data{idxRX});
+				yR = str2num(data{idxRY});
+				LHV = [LHV; xL, yL];
+				RHV = [RHV; xR, yR];
+				if ~(idxLP==-1 && idxRP==-1)
+					lP = str2num(data{idxLP});
+					rP = str2num(data{idxRP});
+					LP = [LP; lP];
+					RP = [RP: rP];
+				end
+			else
+				x = str2num(data{idxX});
+				y = str2num(data{idxY});
+				if isempty(x)
+					x = NaN;
+				end
+				if isempty(y)
+					y = NaN;
+				end
+				HV = [HV; x, y];
+				if idxP~=-1
+					p = str2num(data{idxP});
+					if isempty(p)
+						p = NaN;
+					end
+					P = [P; p];
+				end
+			end
+			if idxC~=-1
+				C = [C; data{idxC}];
+			end
+		end
+		
+		
+		l = fgetl(fp);
+	end
+	
+	fclose(fp);
+	
+	res = DATA;
+	return
+	
+function res = sgttbx_cnv_split(string, sep)
+	idx = findstr(string, sep);
+	if isempty(idx)
+		res = {string};
+		return
+	end
 
+	idx = [0,idx,length(string)+1];
+	res = cell(1,length(idx)-1);
+	for i=1:length(idx)-1
+		res{i} = string((idx(i)+1):(idx(i+1)-1));
+	end
+
+	return
