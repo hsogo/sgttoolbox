@@ -57,8 +57,8 @@ function ret = SimpleGazeTracker(varargin)
 % msg = SimpleGazeTracker('GetWholeEyePositionList', getPupil, timeout)
 %
 % ===== Off-line data analysis =====
-% %Import SimpleGazeTracker CSV file.
-% data = SimpleGazeTracker('ImportDataFile', filename)
+% %Read SimpleGazeTracker CSV file.
+% data = SimpleGazeTracker('ReadDataFile', filename)
 %
 
 persistent sgttbx_param;
@@ -130,8 +130,8 @@ switch(varargin{1})
 	case 'GetWholeMessageList'
 		ret = sgttbx_getWholeMessageList(sgttbx_sockets, varargin{2});
 		return;
-	case 'ImportdDataFile'
-		ret = sgttbx_importDataFile(varargin{2})
+	case 'ReadDataFile'
+		ret = sgttbx_readDataFile(varargin{2});
 	otherwise
 		disp(['Invalid command. (', varargin{1}, ')'])
 end
@@ -873,16 +873,16 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 		res = transpose(reshape(points,3,length(points)/3)); %3=(timestamp, x, y)
 	end
 	
-function res = sgttbx_importDataFile(filename)
+function res = sgttbx_readDataFile(filename)
 	if ~ischar(filename)
 		disp(['parameter must be a string'])
-		res = []
+		res = [];
 		return
 	end
-	fp = fopen(filename,"r");
+	fp = fopen(filename,'r');
 	if fp<0
 		disp(['Could not oepn ', filename,'.'])
-		res = []
+		res = [];
 		return
 	end
 	
@@ -950,10 +950,11 @@ function res = sgttbx_importDataFile(filename)
 				end
 				
 				%D.PARAM = PARAM;
-				for j=1:size(PARAM)(1)
+                paramsize = size(PARAM);
+				for j=1:paramsize(1)
 					paramname = PARAM{j,1}(2:end);
 					paramvalue = PARAM{j,2};
-					eval(['D.PARAM.', paramname, '=paramvalue'])
+					eval(['D.PARAM.', paramname, '=paramvalue;'])
 				end
 				
 				DATA = [DATA, D];
@@ -969,13 +970,20 @@ function res = sgttbx_importDataFile(filename)
 				%Don't reset PARAM!
 				
 			elseif strcmp(data{1},'#MESSAGE')
-				i = size(M)(1)+1;
-				M{i,1} = str2num(data{2});
-				M{i,2} = data{3};
+                [i,j] = size(M);
+				M{i+1,1} = str2num(data{2});
+				M{i+1,2} = data{3};
 			
 			elseif strcmp(data{1},'#DATAFORMAT')
-				idxLX = idxLY = idxRX = idxRY = idxLP = idxRP = -1;
-				idxX = idxY = idxP = -1;
+				idxLX = -1;
+                idxLY = -1;
+                idxRX = -1;
+                idxRY = -1;
+                idxLP = -1;
+                idxRP = -1;
+				idxX = -1;
+                idxY = -1;
+                idxP = -1;
 				idxC = -1;
 				for i=2:length(data)
 					if strcmp(data{i},'T')
@@ -1003,24 +1011,22 @@ function res = sgttbx_importDataFile(filename)
 					end
 				end
 				
-				i = size(PARAM)(1)+1;
-				j = size(data)(2);
-				PARAM{i,1} = data{1};
+				[i,j] = size(PARAM);
+				PARAM{i+1,1} = data{1};
 				if j==2
-					PARAM{i,2} = data{2};
+					PARAM{i+1,2} = data{2};
 				elseif j>2
-					PARAM{i,2} = data(2:end);
+					PARAM{i+1,2} = data(2:end);
 				end
 			elseif strcmp(data{1}, '#RECORDED_EYE')
 				recordedEye = data{2};
 				
-				i = size(PARAM)(1)+1;
-				j = size(data)(2);
-				PARAM{i,1} = data{1};
+                [i,j] = size(PARAM);
+				PARAM{i+1,1} = data{1};
 				if j==2
-					PARAM{i,2} = data{2};
+					PARAM{i+1,2} = data{2};
 				elseif j>2
-					PARAM{i,2} = data(2:end);
+					PARAM{i+1,2} = data(2:end);
 				end
 			elseif strcmp(data{1}, '#CALPOINT')
 			
@@ -1029,13 +1035,14 @@ function res = sgttbx_importDataFile(filename)
 			elseif strcmp(data{1}, '#YPARAM')
 			
 			else % other options
-				i = size(PARAM)(1)+1;
-				j = size(data)(2);
-				PARAM{i,1} = data{1};
-				if j==2
-					PARAM{i,2} = data{2};
+                [i,j] = size(PARAM);
+				PARAM{i+1,1} = data{1};
+				if j==1
+                    PARAM{i+1,2} = [];
+                elseif j==2
+					PARAM{i+1,2} = data{2};
 				elseif j>2
-					PARAM{i,2} = data(2:end);
+					PARAM{i+1,2} = data(2:end);
 				end
 			end
 			
