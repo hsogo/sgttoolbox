@@ -875,7 +875,7 @@ function res = sgttbx_getEyePositionList(sockets, n, getPupil, timeout)
 	
 function res = sgttbx_readDataFile(filename)
 	if ~ischar(filename)
-		disp(['parameter must be a string'])
+		disp('parameter must be a string')
 		res = [];
 		return
 	end
@@ -1060,7 +1060,7 @@ function res = sgttbx_readDataFile(filename)
 					lP = str2num(data{idxLP});
 					rP = str2num(data{idxRP});
 					LP = [LP; lP];
-					RP = [RP: rP];
+					RP = [RP; rP];
 				end
 			else
 				x = str2num(data{idxX});
