@@ -75,7 +75,7 @@ switch(varargin{1})
 		sgttbx_param = ret;
 		return;
 	case 'UpdateParameters'
-        isvalid = sgttbx_verifyparam(varargin{2});
+		isvalid = sgttbx_verifyparam(varargin{2});
 		if isvalid>=0
 			sgttbx_param = varargin{2};
 		end
@@ -202,77 +202,77 @@ function res = sgttbx_connect(sgttbx_param)
 	return; 
 
 function res = sgttbx_verifyparam(newparam)
-    res = -1;
-    if ~(isnumeric(newparam.wrect) && length(newparam.wrect)==4)
-        disp('calArea must be an array of four numbers.')
-        return;
-    end
-    if ~ischar(newparam.IPAddress)
-        disp('IP address must be a string.')
-        return;
-    end
-    if ~(isnumeric(newparam.sendPort) && newparam.sendPort>0)
-        disp('sendPort must be a positive integer.')
-        return;
-    end
-    if ~(isnumeric(newparam.recvPort) && newparam.recvPort>0)
-        disp('recvPort must be a positive integer.')
-        return;
-    end
-    if ~(isnumeric(newparam.imageWidth) && newparam.imageWidth>0)
-        disp('imageWidth must be a positive integer.')
-        return;
-    end
-    if ~(isnumeric(newparam.imageHeight) && newparam.imageHeight>0)
-        disp('imageHeight must be a positive integer.')
-        return;
-    end
-    if ~(isnumeric(newparam.previewWidth) && newparam.previewWidth>0)
-        disp('previewWidth must be a positive integer.')
-        return;
-    end
-    if ~(isnumeric(newparam.previewHeight) && newparam.previewHeight>0)
-        disp('previewHeight must be a positive integer.')
-        return;
-    end
-    if ~(isfloat(newparam.validationShift) && newparam.validationShift>=0)
-        disp('validationShift must be zero or a positive number.')
-        return;
-    end
-    if ~(newparam.showCalDisplay==0 || newparam.showCalDisplay==1)
-        disp('showCalDisplay must be 0 or 1.')
-        return;
-    end
-    if ~(isnumeric(newparam.numSamplesPerTrgpos) && newparam.numSamplesPerTrgpos>0)
-        disp('numSamplesPerTrgpos must be a positive integer.')
-        return;
-    end
-    if ~(isfloat(newparam.caltargetMotionDuration) && newparam.caltargetMotionDuration>=0)
-        disp('caltargetMotionDuration must be zero or a positive number.')
-        return;
-    end
-    if ~(isfloat(newparam.caltargetDurationPerPos) && newparam.caltargetDurationPerPos>0)
-        disp('caltargetDurationPerPos must be a positive number.')
-        return;
-    end
-    if ~(isfloat(newparam.calGetSampleDelay) && newparam.calGetSampleDelay>=0)
-        disp('calGetSampleDelay must be zero or a positive number.')
-        return;
-    end
-    if newparam.caltargetDurationPerPos < newparam.caltargetMotionDuration + newparam.calGetSampleDelay
-        disp('caltargetDurationPerPos must be greater than newparam.caltargetMotionDuration + newparam.calGetSampleDelay.')
-        return;
-    end
-    if ~(isnumeric(newparam.calArea) && length(newparam.calArea)==4)
-        disp('calArea must be an array of four numbers.')
-        return;
-    end
-    for i=1:length(newparam.calTargetPos)
-        if ~(isnumeric(newparam.calTargetPos) && length(newparam.calTargetPos(i,:))==2)
-            disp('calTargetPos must be a numeric array of Nx2.')
-            return;
-        end
-    end
+	res = -1;
+	if ~(isnumeric(newparam.wrect) && length(newparam.wrect)==4)
+		disp('calArea must be an array of four numbers.')
+		return;
+	end
+	if ~ischar(newparam.IPAddress)
+		disp('IP address must be a string.')
+		return;
+	end
+	if ~(isnumeric(newparam.sendPort) && newparam.sendPort>0)
+		disp('sendPort must be a positive integer.')
+		return;
+	end
+	if ~(isnumeric(newparam.recvPort) && newparam.recvPort>0)
+		disp('recvPort must be a positive integer.')
+		return;
+	end
+	if ~(isnumeric(newparam.imageWidth) && newparam.imageWidth>0)
+		disp('imageWidth must be a positive integer.')
+		return;
+	end
+	if ~(isnumeric(newparam.imageHeight) && newparam.imageHeight>0)
+		disp('imageHeight must be a positive integer.')
+		return;
+	end
+	if ~(isnumeric(newparam.previewWidth) && newparam.previewWidth>0)
+		disp('previewWidth must be a positive integer.')
+		return;
+	end
+	if ~(isnumeric(newparam.previewHeight) && newparam.previewHeight>0)
+		disp('previewHeight must be a positive integer.')
+		return;
+	end
+	if ~(isfloat(newparam.validationShift) && newparam.validationShift>=0)
+		disp('validationShift must be zero or a positive number.')
+		return;
+	end
+	if ~(newparam.showCalDisplay==0 || newparam.showCalDisplay==1)
+		disp('showCalDisplay must be 0 or 1.')
+		return;
+	end
+	if ~(isnumeric(newparam.numSamplesPerTrgpos) && newparam.numSamplesPerTrgpos>0)
+		disp('numSamplesPerTrgpos must be a positive integer.')
+		return;
+	end
+	if ~(isfloat(newparam.caltargetMotionDuration) && newparam.caltargetMotionDuration>=0)
+		disp('caltargetMotionDuration must be zero or a positive number.')
+		return;
+	end
+	if ~(isfloat(newparam.caltargetDurationPerPos) && newparam.caltargetDurationPerPos>0)
+		disp('caltargetDurationPerPos must be a positive number.')
+		return;
+	end
+	if ~(isfloat(newparam.calGetSampleDelay) && newparam.calGetSampleDelay>=0)
+		disp('calGetSampleDelay must be zero or a positive number.')
+		return;
+	end
+	if newparam.caltargetDurationPerPos < newparam.caltargetMotionDuration + newparam.calGetSampleDelay
+		disp('caltargetDurationPerPos must be greater than newparam.caltargetMotionDuration + newparam.calGetSampleDelay.')
+		return;
+	end
+	if ~(isnumeric(newparam.calArea) && length(newparam.calArea)==4)
+		disp('calArea must be an array of four numbers.')
+		return;
+	end
+	for i=1:length(newparam.calTargetPos)
+		if ~(isnumeric(newparam.calTargetPos) && length(newparam.calTargetPos(i,:))==2)
+			disp('calTargetPos must be a numeric array of Nx2.')
+			return;
+		end
+	end
 	res = 0;
 
 function res = sgttbx_openDataFile(sockets, fname, overwrite)
@@ -313,7 +313,7 @@ function msg = sgttbx_getCurrentMenu(sockets)
 		return
 	end
 	sgttbx_sendCommand(sockets, 'getCurrMenu');
-    startTime = GetSecs();
+	startTime = GetSecs();
 	while 1
 		data = sgttbx_net(sockets.recvcon,'read');
 		if isempty(data)
@@ -325,12 +325,12 @@ function msg = sgttbx_getCurrentMenu(sockets)
 			return;
 		else
 			msg = [msg, data];
-        end
-        
+		end
+		
 		if GetSecs()-startTime > 0.1 %timeout
 			return
 		end
-    end
+	end
 
 function img = sgttbx_getCameraImage(param, sockets)
 	img = [];
@@ -919,7 +919,7 @@ function res = sgttbx_readDataFile(filename)
 			if strcmp(data{1},'#START_REC')
 				inTrial = true;
 				
-				D.STARTREC = data(2:end);
+				D.STARTREC = cellfun(@str2num,data(2:end));
 			elseif strcmp(data{1},'#STOP_REC')
 				inTrial = false;
 				if recordedEye == 'B'
@@ -949,9 +949,7 @@ function res = sgttbx_readDataFile(filename)
 					end
 				end
 				
-				%D.PARAM = PARAM;
-                paramsize = size(PARAM);
-				for j=1:paramsize(1)
+				for j=1:size(PARAM,1)
 					paramname = PARAM{j,1}(2:end);
 					paramvalue = PARAM{j,2};
 					eval(['D.PARAM.', paramname, '=paramvalue;'])
@@ -970,20 +968,20 @@ function res = sgttbx_readDataFile(filename)
 				%Don't reset PARAM!
 				
 			elseif strcmp(data{1},'#MESSAGE')
-                [i,j] = size(M);
+				i = size(M,1);
 				M{i+1,1} = str2num(data{2});
 				M{i+1,2} = data{3};
 			
 			elseif strcmp(data{1},'#DATAFORMAT')
 				idxLX = -1;
-                idxLY = -1;
-                idxRX = -1;
-                idxRY = -1;
-                idxLP = -1;
-                idxRP = -1;
+				idxLY = -1;
+				idxRX = -1;
+				idxRY = -1;
+				idxLP = -1;
+				idxRP = -1;
 				idxX = -1;
-                idxY = -1;
-                idxP = -1;
+				idxY = -1;
+				idxP = -1;
 				idxC = -1;
 				for i=2:length(data)
 					if strcmp(data{i},'T')
@@ -1011,7 +1009,8 @@ function res = sgttbx_readDataFile(filename)
 					end
 				end
 				
-				[i,j] = size(PARAM);
+				i = size(PARAM,1);
+				j = size(data,2);
 				PARAM{i+1,1} = data{1};
 				if j==2
 					PARAM{i+1,2} = data{2};
@@ -1021,7 +1020,8 @@ function res = sgttbx_readDataFile(filename)
 			elseif strcmp(data{1}, '#RECORDED_EYE')
 				recordedEye = data{2};
 				
-                [i,j] = size(PARAM);
+				i = size(PARAM,1);
+				j = size(data,2);
 				PARAM{i+1,1} = data{1};
 				if j==2
 					PARAM{i+1,2} = data{2};
@@ -1035,11 +1035,12 @@ function res = sgttbx_readDataFile(filename)
 			elseif strcmp(data{1}, '#YPARAM')
 			
 			else % other options
-                [i,j] = size(PARAM);
+				i = size(PARAM,1);
+				j = size(data,2);
 				PARAM{i+1,1} = data{1};
 				if j==1
-                    PARAM{i+1,2} = [];
-                elseif j==2
+					PARAM{i+1,2} = [];
+				elseif j==2
 					PARAM{i+1,2} = data{2};
 				elseif j>2
 					PARAM{i+1,2} = data(2:end);
