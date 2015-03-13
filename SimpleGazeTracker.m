@@ -452,6 +452,12 @@ function res = sgttbx_calibrationLoop(param, sockets)
 				showCalResults = 1;
 			end
 		end
+		if keyCode(KbName('s'))==1
+			if(isCalDone==1)
+                sgttbx_sendCommand(sockets, 'saveCalValResultsDetail');
+				WaitSecs(0.5); %prevent chattering
+			end
+		end
 		
 		Screen('FillRect',param.wptr,127);
 		if showCalResults==1
