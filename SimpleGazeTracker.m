@@ -898,6 +898,7 @@ function res = sgttbx_readDataFile(filename)
 	HV = [];
 	P = [];
 	C = [];
+	CAL = [];
 	PARAM = [];
 	
 	recordedEye = 'L';
@@ -929,6 +930,8 @@ function res = sgttbx_readDataFile(filename)
 					D.LP = LP;
 					D.RP = RP;
 					D.Message = M;
+					D.C = C;
+					D.CAL = CAL;
 				else
 					if recordedEye == 'L'
 						D.T = T;
@@ -938,6 +941,7 @@ function res = sgttbx_readDataFile(filename)
 						D.RP = [];
 						D.MSG = M;
 						D.C = C;
+						D.CAL = CAL;
 					else %recordedEye == 'R'
 						D.T = T;
 						D.L = [];
@@ -946,6 +950,7 @@ function res = sgttbx_readDataFile(filename)
 						D.RP = P;
 						D.MSG = M;
 						D.C = C;
+						D.CAL = CAL;
 					end
 				end
 				
@@ -965,11 +970,12 @@ function res = sgttbx_readDataFile(filename)
 				HV = [];
 				P = [];
 				C = [];
+				CAL = [];
 				%Don't reset PARAM!
 				
 			elseif strcmp(data{1},'#MESSAGE')
 				i = size(M,1);
-				M{i+1,1} = str2num(data{2});
+				M{i+1,1} = str2double(data{2});
 				M{i+1,2} = data{3};
 			
 			elseif strcmp(data{1},'#DATAFORMAT')
@@ -1029,11 +1035,29 @@ function res = sgttbx_readDataFile(filename)
 					PARAM{i+1,2} = data(2:end);
 				end
 			elseif strcmp(data{1}, '#CALPOINT')
-			
-			elseif strcmp(data{1}, '#XPARAM')
-			
-			elseif strcmp(data{1}, '#YPARAM')
-			
+				if recordedEye == 'B'
+                    tmpcaldata = zeros(1,10);
+                    for k=1:10
+                        try
+                            tmpcaldata(k) = str2double(data{k+1});
+                        catch
+                            tmpcaldata(k) = NaN;
+                        end
+                    end
+					CAL = [CAL; tmpcaldata];
+				else
+                    tmpcaldata = zeros(1,6);
+                    for k=1:6
+                        try
+                            tmpcaldata(k) = str2double(data{k+1});
+                        catch
+                            tmpcaldata(k) = NaN;
+                        end
+                    end
+					CAL = [CAL; tmpcaldata];
+				end
+			elseif strcmp(data{1}, '#SimpleGazeTrackerDataFile')
+                
 			else % other options
 				i = size(PARAM,1);
 				j = size(data,2);
@@ -1048,23 +1072,23 @@ function res = sgttbx_readDataFile(filename)
 			end
 			
 		else % gaze data
-			T = [T; str2num(data{idxT})];
+			T = [T; str2double(data{idxT})];
 			if recordedEye == 'B'
-				xL = str2num(data{idxLX});
-				yL = str2num(data{idxLY});
-				xR = str2num(data{idxRX});
-				yR = str2num(data{idxRY});
+				xL = str2double(data{idxLX});
+				yL = str2double(data{idxLY});
+				xR = str2double(data{idxRX});
+				yR = str2double(data{idxRY});
 				LHV = [LHV; xL, yL];
 				RHV = [RHV; xR, yR];
 				if ~(idxLP==-1 && idxRP==-1)
-					lP = str2num(data{idxLP});
-					rP = str2num(data{idxRP});
+					lP = str2double(data{idxLP});
+					rP = str2double(data{idxRP});
 					LP = [LP; lP];
 					RP = [RP; rP];
 				end
 			else
-				x = str2num(data{idxX});
-				y = str2num(data{idxY});
+				x = str2double(data{idxX});
+				y = str2double(data{idxY});
 				if isempty(x)
 					x = NaN;
 				end
@@ -1073,7 +1097,7 @@ function res = sgttbx_readDataFile(filename)
 				end
 				HV = [HV; x, y];
 				if idxP~=-1
-					p = str2num(data{idxP});
+					p = str2double(data{idxP});
 					if isempty(p)
 						p = NaN;
 					end
