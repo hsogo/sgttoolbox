@@ -1,6 +1,6 @@
 function ret = SimpleGazeTracker(varargin)
-% SimpeGazeTracker toolbox 0.2.2 (compatible with SimpleGazeTracker 0.6.5)
-% Copyright (C) 2012-2013 Hiroyuki Sogo.
+% SimpeGazeTracker toolbox 0.3.0 (compatible with SimpleGazeTracker 0.8.0)
+% Copyright (C) 2012-2015 Hiroyuki Sogo.
 % Thanks to Ryuta Iseki and Yuta Kawabe for Matlab support.
 % 
 % Distributed under the terms of the GNU General Public License (GPL).
