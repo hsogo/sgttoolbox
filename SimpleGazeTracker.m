@@ -1,6 +1,6 @@
 function ret = SimpleGazeTracker(varargin)
-% SimpeGazeTracker toolbox 0.2.2 (compatible with SimpleGazeTracker 0.6.5)
-% Copyright (C) 2012-2013 Hiroyuki Sogo.
+% SimpeGazeTracker toolbox 0.4.0 (compatible with SimpleGazeTracker 0.8.2)
+% Copyright (C) 2012-2015 Hiroyuki Sogo.
 % Thanks to Ryuta Iseki and Yuta Kawabe for Matlab support.
 % 
 % Distributed under the terms of the GNU General Public License (GPL).
@@ -13,6 +13,9 @@ function ret = SimpleGazeTracker(varargin)
 % 
 % %Update SimpleGazeTracker toolbox parameters
 % ret = SimpleGazeTracker('UpdateParameters',param);
+%
+% %Get SimpleGazeTracker's camera image size
+% ret = SimpleGazeTracker('GetCameraImageSize')
 % 
 % ===== Open/close connection with SimpleGazeTracker =====
 % %Open TCP/IP connection with SimpleGazeTracker
@@ -81,6 +84,9 @@ switch(varargin{1})
 		end
 		ret = {isvalid, sgttbx_param};
 		return;
+    case 'GetCameraImageSize'
+        ret = sgttbx_getCameraImageSize(sgttbx_sockets);
+        return;
 	case 'OpenDataFile'
 		ret = sgttbx_openDataFile(sgttbx_sockets, varargin{2}, varargin{3});
 		return;
@@ -274,6 +280,41 @@ function res = sgttbx_verifyparam(newparam)
 		end
 	end
 	res = 0;
+
+function imgsize = sgttbx_getCameraImageSize(sockets)
+    imgsize = [-1, -1];
+    if ~isstruct(sockets)
+        return
+    end
+  	sgttbx_sendCommand(sockets, 'getCameraImageSize');
+    result = [];
+    
+    startTime = GetSecs();
+    while 1
+		data = sgttbx_net(sockets.recvcon,'read');
+		if isempty(data)
+			continue
+		end
+		term = find(data==0);
+		if term>=0
+			result = data(1:term(1)-1);
+			break;
+		else
+			result = [result, data];
+		end
+		
+		if GetSecs()-startTime > 0.1 %timeout
+			return
+		end
+    end
+    
+    if ~isempty(result)
+        resnum = str2num(result);
+        if length(resnum)==2
+            imgsize = resnum;
+        end
+    end
+
 
 function res = sgttbx_openDataFile(sockets, fname, overwrite)
 	if ~(overwrite==1 || overwrite==0)
