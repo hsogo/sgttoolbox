@@ -1,7 +1,7 @@
 /**********************************************************
-% Mex file for SimpeGazeTracker toolbox 0.2.0
-% (compatible with SimpleGazeTracker 0.6.5)
-% Copyright (C) 2012-2013 Hiroyuki Sogo.
+% Mex file for SimpeGazeTracker toolbox 0.3.0
+% (compatible with SimpleGazeTracker 0.8.0)
+% Copyright (C) 2012-2015 Hiroyuki Sogo.
 % Distributed under the terms of the GNU General Public License (GPL).
 % 
 % Part of this program is based on pnet.c Version2.0.5 + PTBMods
