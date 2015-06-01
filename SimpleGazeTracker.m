@@ -17,6 +17,9 @@ function ret = SimpleGazeTracker(varargin)
 % %Get SimpleGazeTracker's camera image size
 % ret = SimpleGazeTracker('GetCameraImageSize')
 % 
+% %Insert information to the SimpleGazeTracker data file
+% ret = SimpleGazeTracker('SendSettings', info)
+% 
 % ===== Open/close connection with SimpleGazeTracker =====
 % %Open TCP/IP connection with SimpleGazeTracker
 % ret = SimpleGazeTracker('Connect');
@@ -111,7 +114,8 @@ switch(varargin{1})
 		ret = sgttbx_sendMessage(sgttbx_sockets, varargin{2});
 		return;
 	case 'SendSettings'
-		disp('SendSettings is not implemented.')
+        ret = sgttbx_sendSettings(sgttbx_sockets, varargin{2});
+        return;
 	case 'CalibrationLoop'
 		ret = sgttbx_calibrationLoop(sgttbx_param, sgttbx_sockets);
 		return;
@@ -347,7 +351,32 @@ function res = sgttbx_sendCommand(sockets, command)
 
 function res = sgttbx_sendMessage(sockets, message)
 	res = sgttbx_sendCommand(sockets, ['insertMessage',0,message]);
+    return;
 
+function res = sgttbx_sendSettings(sockets, info)
+    res = 0;
+    infostr = '';
+    if ~iscell(info)
+        res = -1;
+        return;
+    end
+    for i=1:length(info)
+        if length(info{i}) ~= 2
+            res = -1;
+            return
+        end
+        if isnumeric(info{i}{2})
+            valuestr = num2str(info{i}{2});
+        else
+            valuestr = info{i}{2};
+        end
+        infostr = [infostr, '#', info{i}{1}, ',', valuestr, '/'];
+    end
+    infostr = infostr(1:end-1);
+	sgttbx_sendCommand(sockets, ['insertSettings',0,infostr]);
+    
+    return;
+    
 function msg = sgttbx_getCurrentMenu(sockets)
 	msg = '';
 	if ~isstruct(sockets)
