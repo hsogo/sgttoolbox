@@ -17,12 +17,12 @@ function ret = SimpleGazeTracker(varargin)
 % %Get SimpleGazeTracker's camera image size
 % ret = SimpleGazeTracker('GetCameraImageSize')
 % 
-% %Insert information to the SimpleGazeTracker data file
-% ret = SimpleGazeTracker('SendSettings', info)
-% 
 % ===== Open/close connection with SimpleGazeTracker =====
 % %Open TCP/IP connection with SimpleGazeTracker
 % ret = SimpleGazeTracker('Connect');
+% 
+% %Insert information to the SimpleGazeTracker data file
+% ret = SimpleGazeTracker('SendSettings', info)
 % 
 % %Close TCP/IP connection
 % ret = SimpleGazeTracker('CloseConnection');
@@ -1112,24 +1112,24 @@ function res = sgttbx_readDataFile(filename)
 				end
 			elseif strcmp(data{1}, '#CALPOINT')
 				if recordedEye == 'B'
-                    tmpcaldata = zeros(1,10);
-                    for k=1:10
-                        try
-                            tmpcaldata(k) = str2double(data{k+1});
-                        catch
-                            tmpcaldata(k) = NaN;
-                        end
-                    end
+					tmpcaldata = zeros(1,10);
+					for k=1:10
+						try
+							tmpcaldata(k) = str2double(data{k+1});
+						catch
+							tmpcaldata(k) = NaN;
+						end
+					end
 					CAL = [CAL; tmpcaldata];
 				else
-                    tmpcaldata = zeros(1,6);
-                    for k=1:6
-                        try
-                            tmpcaldata(k) = str2double(data{k+1});
-                        catch
-                            tmpcaldata(k) = NaN;
-                        end
-                    end
+					tmpcaldata = zeros(1,6);
+					for k=1:6
+						try
+							tmpcaldata(k) = str2double(data{k+1});
+						catch
+							tmpcaldata(k) = NaN;
+						end
+					end
 					CAL = [CAL; tmpcaldata];
 				end
 			elseif strcmp(data{1}, '#SimpleGazeTrackerDataFile')
