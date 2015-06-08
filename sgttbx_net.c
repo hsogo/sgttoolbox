@@ -1,6 +1,6 @@
 /**********************************************************
-% Mex file for SimpeGazeTracker toolbox 0.3.0
-% (compatible with SimpleGazeTracker 0.8.0)
+% Mex file for SimpeGazeTracker toolbox 0.4.0
+% (compatible with SimpleGazeTracker 0.8.2)
 % Copyright (C) 2012-2015 Hiroyuki Sogo.
 % Distributed under the terms of the GNU General Public License (GPL).
 % 
