@@ -3,25 +3,25 @@ AssertOpenGL;
 ipAddress = input('SimpleGazeTracker address: ','s');
 
 settings = {
-    {'RECORDED_EYE', 'L'},...
-    {'SCREEN_ORIGIN', 'TopLeft'},...
-    {'TRACKER_ORIGIN', 'TopLeft'},...
-    {'SCREEN_WIDTH', 1024},...
-    {'SCREEN_HEIGHT', 768},...
-    {'VIEWING_DISTANCE', 57.3},...
-    {'DOTS_PER_CENTIMETER_H', 24.26},...
-    {'DOTS_PER_CENTIMETER_V', 24.26},...
-    {'SACCADE_VELOCITY_THRESHOLD', 20.0},...
-    {'SACCADE_ACCELERATION_THRESHOLD', 3800.0},...
-    {'SACCADE_MINIMUM_DURATION', 12},...
-    {'SACCADE_MINIMUM_AMPLITUDE', 0.2},...
-    {'FIXATION_MINIMUM_DURATION', 12},...
-    {'BLINK_MINIMUM_DURATION', 50},...
-    {'RESAMPLING', 0},...
-    {'FILTER_TYPE', 'identity'},...
-    {'FILTER_WN', 0.2},...
-    {'FILTER_SIZE', 5},...
-    {'FILTER_ORDER', 3}
+	{'RECORDED_EYE', 'L'},...
+	{'SCREEN_ORIGIN', 'TopLeft'},...
+	{'TRACKER_ORIGIN', 'TopLeft'},...
+	{'SCREEN_WIDTH', 1024},...
+	{'SCREEN_HEIGHT', 768},...
+	{'VIEWING_DISTANCE', 57.3},...
+	{'DOTS_PER_CENTIMETER_H', 24.26},...
+	{'DOTS_PER_CENTIMETER_V', 24.26},...
+	{'SACCADE_VELOCITY_THRESHOLD', 20.0},...
+	{'SACCADE_ACCELERATION_THRESHOLD', 3800.0},...
+	{'SACCADE_MINIMUM_DURATION', 12},...
+	{'SACCADE_MINIMUM_AMPLITUDE', 0.2},...
+	{'FIXATION_MINIMUM_DURATION', 12},...
+	{'BLINK_MINIMUM_DURATION', 50},...
+	{'RESAMPLING', 0},...
+	{'FILTER_TYPE', 'identity'},...
+	{'FILTER_WN', 0.2},...
+	{'FILTER_SIZE', 5},...
+	{'FILTER_ORDER', 3}
 };
 
 try
@@ -56,45 +56,45 @@ try
 		param.calTargetPos(i,:) = param.calTargetPos(i,:)+[cx,cy];
 	end
 	result = SimpleGazeTracker('UpdateParameters',param);
-    if result{1} < 0 %failed
-        disp('Could not update parameter. Abort.');
-        Screen('CloseAll');
-        return;
-    end
+	if result{1} < 0 %failed
+		disp('Could not update parameter. Abort.');
+		Screen('CloseAll');
+		return;
+	end
 	
 	%-----------------------------------------------------------------
 	% Connect to SimpleGazeTracker and open data file.
 	%-----------------------------------------------------------------
-    
+	
 	res = SimpleGazeTracker('Connect');
-    
+	
 	if res==-1 %connection failed
 		Screen('CloseAll');
 		return;
-    end
-    
+	end
+	
 	SimpleGazeTracker('OpenDataFile','data.csv',0); %datafile is not overwritten.
 
-    %
-    % Update Camera Image Buffer
-    %
-    
-    imgsize = SimpleGazeTracker('GetCameraImageSize');
-    param.imageWidth = imgsize(1);
-    param.imageHeight = imgsize(2);
+	%
+	% Update Camera Image Buffer
+	%
+	
+	imgsize = SimpleGazeTracker('GetCameraImageSize');
+	param.imageWidth = imgsize(1);
+	param.imageHeight = imgsize(2);
 	result = SimpleGazeTracker('UpdateParameters',param);
-    if result{1} < 0 %failed
-        disp('Could not update parameter. Abort.');
-        Screen('CloseAll');
-        return;
-    end
-    
-    %
-    % Send settings
-    %
-    res = SimpleGazeTracker('SendSettings', settings);
-    
-    %-----------------------------------------------------------------
+	if result{1} < 0 %failed
+		disp('Could not update parameter. Abort.');
+		Screen('CloseAll');
+		return;
+	end
+	
+	%
+	% Send settings
+	%
+	res = SimpleGazeTracker('SendSettings', settings);
+	
+	%-----------------------------------------------------------------
 	% Perform calibration.
 	%-----------------------------------------------------------------
 	while 1
@@ -130,7 +130,7 @@ try
 		[keyIsDown, secs, keyCode, deltaSecs] = KbCheck();
 		if keyCode(KbName('Space'))==1
 			% prevent chattering...
-		    if GetSecs()-previousKeyPressTime > 0.2
+			if GetSecs()-previousKeyPressTime > 0.2
 				SimpleGazeTracker('SendMessage','Space');
 				%get the latest 6 samples.
 				tmp = SimpleGazeTracker('GetEyePositionList',6,0,0.02);
@@ -145,7 +145,7 @@ try
 				else
 					targetColor=255;
 				end
-		    end
+			end
 		end
 		if mod(q,60)==0
 			%Send message every 60 frames.
@@ -230,7 +230,7 @@ try
 	Screen('CloseAll');
 
 catch
-	psychrethrow(psychlasterror);
 	SimpleGazeTracker('CloseConnection');
 	Screen('CloseAll');
+	psychrethrow(psychlasterror);
 end
