@@ -23,7 +23,8 @@
 #include <ctype.h>
 
 /******* WINDOWS ONLY DEFINES *********/
-#ifdef WIN32
+//#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #define IFWINDOWS(dothis) dothis
 #define IFUNIX(dothis)
 #include <winsock2.h>
