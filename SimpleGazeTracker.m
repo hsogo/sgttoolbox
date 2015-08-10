@@ -789,8 +789,10 @@ function offscr = sgttbx_drawCalResults(param, sockets, calimgtex, timeout)
 		[offscr, rect] = Screen('OpenOffscreenWindow', param.wptr, 127, param.wrect);
 		for iter=1:length(points)/4
 			Screen('DrawLine', offscr, 0, points(4*(iter-1)+1), points(4*(iter-1)+2), points(4*(iter-1)+3), points(4*iter));
-		end
-	end
+        end
+    else
+		[offscr, rect] = Screen('OpenOffscreenWindow', param.wptr, 127, param.wrect);
+    end
 
 function res = sgttbx_getCalResults(sockets, timeout)
 	res = 'Calibration failed (communication error?)';
