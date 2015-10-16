@@ -1,3 +1,4 @@
+%Screen('Preference','SkipSyncTests',1);
 AssertOpenGL;
 
 ipAddress = input('SimpleGazeTracker address: ','s');
