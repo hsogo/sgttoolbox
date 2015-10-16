@@ -528,6 +528,10 @@ function res = sgttbx_calibrationLoop(param, sockets)
 				WaitSecs(0.5); %prevent chattering
 			end
 		end
+		if keyCode(KbName('i'))==1
+			sgttbx_sendCommand(sockets, ['saveCameraImage',0,'SGT_',datestr(now,'yyyy-mm-dd-HHMMSS-FFF'),'.bmp']);
+			WaitSecs(0.5); %prevent chattering
+		end
 		
 		Screen('FillRect',param.wptr,127);
 		if showCalResults==1
